@@ -183,7 +183,7 @@ interface ILendingPool {
     uint256 amount,
     address onBehalfOf,
     uint16 referralCode
-  ) external;
+  ) external payable;
 
   /**
    * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
@@ -196,11 +196,7 @@ interface ILendingPool {
    *   different wallet
    * @return The final amount withdrawn
    **/
-  function withdraw(
-    address asset,
-    uint256 amount,
-    address to
-  ) external returns (uint256);
+  function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 
   /**
    * @dev Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
@@ -223,7 +219,7 @@ interface ILendingPool {
     uint256 interestRateMode,
     uint16 referralCode,
     address onBehalfOf
-  ) external;
+  ) external payable;
 
   /**
    * @notice Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
@@ -242,7 +238,7 @@ interface ILendingPool {
     uint256 amount,
     uint256 rateMode,
     address onBehalfOf
-  ) external returns (uint256);
+  ) external payable returns (uint256);
 
   /**
    * @dev Allows a borrower to swap his debt between stable and variable mode, or viceversa
@@ -286,7 +282,7 @@ interface ILendingPool {
     address user,
     uint256 debtToCover,
     bool receiveAToken
-  ) external;
+  ) external payable;
 
   /**
    * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
@@ -313,7 +309,7 @@ interface ILendingPool {
     address onBehalfOf,
     bytes calldata params,
     uint16 referralCode
-  ) external;
+  ) external payable;
 
   /**
    * @dev Returns the user account data across all the reserves
@@ -325,7 +321,9 @@ interface ILendingPool {
    * @return ltv the loan to value of the user
    * @return healthFactor the current health factor of the user
    **/
-  function getUserAccountData(address user)
+  function getUserAccountData(
+    address user
+  )
     external
     view
     returns (
@@ -345,8 +343,10 @@ interface ILendingPool {
     address interestRateStrategyAddress
   ) external;
 
-  function setReserveInterestRateStrategyAddress(address reserve, address rateStrategyAddress)
-    external;
+  function setReserveInterestRateStrategyAddress(
+    address reserve,
+    address rateStrategyAddress
+  ) external;
 
   function setConfiguration(address reserve, uint256 configuration) external;
 
@@ -355,20 +355,18 @@ interface ILendingPool {
    * @param asset The address of the underlying asset of the reserve
    * @return The configuration of the reserve
    **/
-  function getConfiguration(address asset)
-    external
-    view
-    returns (DataTypes.ReserveConfigurationMap memory);
+  function getConfiguration(
+    address asset
+  ) external view returns (DataTypes.ReserveConfigurationMap memory);
 
   /**
    * @dev Returns the configuration of the user across all the reserves
    * @param user The user address
    * @return The configuration of the user
    **/
-  function getUserConfiguration(address user)
-    external
-    view
-    returns (DataTypes.UserConfigurationMap memory);
+  function getUserConfiguration(
+    address user
+  ) external view returns (DataTypes.UserConfigurationMap memory);
 
   /**
    * @dev Returns the normalized income normalized income of the reserve

@@ -56,5 +56,5 @@ interface ILendingPoolCollateralManager {
     address user,
     uint256 debtToCover,
     bool receiveAToken
-  ) external returns (uint256, string memory);
+  ) external payable returns (uint256, string memory);
 }

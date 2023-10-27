@@ -123,7 +123,7 @@ const buidlerConfig: HardhatUserConfig = {
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
       gas: DEFAULT_BLOCK_GAS_LIMIT,
       gasPrice: 8000000000,
-      allowUnlimitedContractSize: UNLIMITED_BYTECODE_SIZE,
+      allowUnlimitedContractSize: true,
       chainId: BUIDLEREVM_CHAINID,
       throwOnTransactionFailures: true,
       throwOnCallFailures: true,

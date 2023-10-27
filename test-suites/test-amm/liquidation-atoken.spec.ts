@@ -7,6 +7,7 @@ import { makeSuite } from './helpers/make-suite';
 import { ProtocolErrors, RateMode } from '../../helpers/types';
 import { calcExpectedVariableDebtTokenBalance } from './helpers/utils/calculations';
 import { getUserData, getReserveData } from './helpers/utils/helpers';
+import { H1NativeApplication_Fee } from '../../helpers/h1';
 
 const chai = require('chai');
 const { expect } = chai;
@@ -35,7 +36,9 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
     const amountDAItoDeposit = await convertToCurrencyDecimals(dai.address, '1000');
     await pool
       .connect(depositor.signer)
-      .deposit(dai.address, amountDAItoDeposit, depositor.address, '0');
+      .deposit(dai.address, amountDAItoDeposit, depositor.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
 
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
@@ -48,7 +51,9 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
     //user 2 deposits 1 WETH
     await pool
       .connect(borrower.signer)
-      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
+      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
 
     //user 2 borrows
     const userGlobalData = await pool.getUserAccountData(borrower.address);
@@ -64,7 +69,9 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
 
     await pool
       .connect(borrower.signer)
-      .borrow(dai.address, amountDAIToBorrow, RateMode.Variable, '0', borrower.address);
+      .borrow(dai.address, amountDAIToBorrow, RateMode.Variable, '0', borrower.address, {
+        value: H1NativeApplication_Fee,
+      });
 
     const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
 
@@ -75,7 +82,9 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
 
     //someone tries to liquidate user 2
     await expect(
-      pool.liquidationCall(weth.address, dai.address, borrower.address, 1, true)
+      pool.liquidationCall(weth.address, dai.address, borrower.address, 1, true, {
+        value: H1NativeApplication_Fee,
+      })
     ).to.be.revertedWith(LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD);
   });
 
@@ -103,7 +112,14 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
     const borrower = users[1];
     //user 2 tries to borrow
     await expect(
-      pool.liquidationCall(weth.address, weth.address, borrower.address, oneEther.toString(), true)
+      pool.liquidationCall(
+        weth.address,
+        weth.address,
+        borrower.address,
+        oneEther.toString(),
+        true,
+        { value: H1NativeApplication_Fee }
+      )
     ).revertedWith(LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER);
   });
 
@@ -112,7 +128,9 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
     const borrower = users[1];
 
     await expect(
-      pool.liquidationCall(dai.address, dai.address, borrower.address, oneEther.toString(), true)
+      pool.liquidationCall(dai.address, dai.address, borrower.address, oneEther.toString(), true, {
+        value: H1NativeApplication_Fee,
+      })
     ).revertedWith(LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED);
   });
 
@@ -146,7 +164,8 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
       dai.address,
       borrower.address,
       amountToLiquidate,
-      true
+      true,
+      { value: H1NativeApplication_Fee }
     );
 
     const userReserveDataAfter = await helpersContract.getUserReserveData(
@@ -248,7 +267,9 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
 
     await pool
       .connect(depositor.signer)
-      .deposit(usdc.address, amountUSDCtoDeposit, depositor.address, '0');
+      .deposit(usdc.address, amountUSDCtoDeposit, depositor.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
 
     //user 4 deposits 1 ETH
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
@@ -261,7 +282,9 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
 
     await pool
       .connect(borrower.signer)
-      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
+      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
 
     //user 4 borrows
     const userGlobalData = await pool.getUserAccountData(borrower.address);
@@ -278,7 +301,9 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
 
     await pool
       .connect(borrower.signer)
-      .borrow(usdc.address, amountUSDCToBorrow, RateMode.Variable, '0', borrower.address);
+      .borrow(usdc.address, amountUSDCToBorrow, RateMode.Variable, '0', borrower.address, {
+        value: H1NativeApplication_Fee,
+      });
 
     //drops HF below 1
 
@@ -311,7 +336,8 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
       usdc.address,
       borrower.address,
       amountToLiquidate,
-      true
+      true,
+      { value: H1NativeApplication_Fee }
     );
 
     const userReserveDataAfter = await helpersContract.getUserReserveData(

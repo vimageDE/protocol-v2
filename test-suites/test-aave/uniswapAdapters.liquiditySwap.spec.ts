@@ -17,6 +17,7 @@ import { eContractid } from '../../helpers/types';
 import { AToken } from '../../types/AToken';
 import { BUIDLEREVM_CHAINID } from '../../helpers/buidler-constants';
 import { MAX_UINT_AMOUNT } from '../../helpers/constants';
+import { H1NativeApplication_Fee } from '../../helpers/h1';
 const { parseEther } = ethers.utils;
 
 const { expect } = require('chai');
@@ -68,30 +69,28 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         // Provide liquidity
         await dai.mint(parseEther('20000'));
         await dai.approve(pool.address, parseEther('20000'));
-        await pool.deposit(dai.address, parseEther('20000'), deployer.address, 0);
+        await pool.deposit(dai.address, parseEther('20000'), deployer.address, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         const usdcAmount = await convertToCurrencyDecimals(usdc.address, '10');
         await usdc.mint(usdcAmount);
         await usdc.approve(pool.address, usdcAmount);
-        await pool.deposit(usdc.address, usdcAmount, deployer.address, 0);
+        await pool.deposit(usdc.address, usdcAmount, deployer.address, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         // Make a deposit for user
         await weth.mint(parseEther('100'));
         await weth.approve(pool.address, parseEther('100'));
-        await pool.deposit(weth.address, parseEther('100'), userAddress, 0);
+        await pool.deposit(weth.address, parseEther('100'), userAddress, 0, {
+          value: H1NativeApplication_Fee,
+        });
       });
 
       it('should correctly swap tokens and deposit the out tokens in the pool', async () => {
-        const {
-          users,
-          weth,
-          oracle,
-          dai,
-          aDai,
-          aWETH,
-          pool,
-          uniswapLiquiditySwapAdapter,
-        } = testEnv;
+        const { users, weth, oracle, dai, aDai, aWETH, pool, uniswapLiquiditySwapAdapter } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -135,7 +134,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         )
           .to.emit(uniswapLiquiditySwapAdapter, 'Swapped')
@@ -159,17 +159,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap and deposit multiple tokens', async () => {
-        const {
-          users,
-          weth,
-          oracle,
-          dai,
-          aDai,
-          aWETH,
-          usdc,
-          pool,
-          uniswapLiquiditySwapAdapter,
-        } = testEnv;
+        const { users, weth, oracle, dai, aDai, aWETH, usdc, pool, uniswapLiquiditySwapAdapter } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -203,7 +194,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         // Make a deposit for user
         await usdc.connect(user).mint(amountUSDCtoSwap);
         await usdc.connect(user).approve(pool.address, amountUSDCtoSwap);
-        await pool.connect(user).deposit(usdc.address, amountUSDCtoSwap, userAddress, 0);
+        await pool.connect(user).deposit(usdc.address, amountUSDCtoSwap, userAddress, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         const aUsdcData = await pool.getReserveData(usdc.address);
         const aUsdc = await getContract<AToken>(eContractid.AToken, aUsdcData.aTokenAddress);
@@ -251,7 +244,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             [0, 0],
             userAddress,
             params,
-            0
+            0,
+            { value: H1NativeApplication_Fee.mul(2) }
           );
 
         const adapterWethBalance = await weth.balanceOf(uniswapLiquiditySwapAdapter.address);
@@ -275,17 +269,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap and deposit multiple tokens using permit', async () => {
-        const {
-          users,
-          weth,
-          oracle,
-          dai,
-          aDai,
-          aWETH,
-          usdc,
-          pool,
-          uniswapLiquiditySwapAdapter,
-        } = testEnv;
+        const { users, weth, oracle, dai, aDai, aWETH, usdc, pool, uniswapLiquiditySwapAdapter } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
         const chainId = DRE.network.config.chainId || BUIDLEREVM_CHAINID;
@@ -326,7 +311,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         // Make a deposit for user
         await usdc.connect(user).mint(amountUSDCtoSwap);
         await usdc.connect(user).approve(pool.address, amountUSDCtoSwap);
-        await pool.connect(user).deposit(usdc.address, amountUSDCtoSwap, userAddress, 0);
+        await pool.connect(user).deposit(usdc.address, amountUSDCtoSwap, userAddress, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         const aUsdcData = await pool.getReserveData(usdc.address);
         const aUsdc = await getContract<AToken>(eContractid.AToken, aUsdcData.aTokenAddress);
@@ -357,10 +344,11 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
           deadline,
           amountWETHtoSwap.toString()
         );
-        const { v: aWETHv, r: aWETHr, s: aWETHs } = getSignatureFromTypedData(
-          ownerPrivateKey,
-          aWethMsgParams
-        );
+        const {
+          v: aWETHv,
+          r: aWETHr,
+          s: aWETHs,
+        } = getSignatureFromTypedData(ownerPrivateKey, aWethMsgParams);
 
         const aUsdcNonce = (await aUsdc._nonces(userAddress)).toNumber();
         const aUsdcMsgParams = buildPermitParams(
@@ -374,10 +362,11 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
           deadline,
           amountUSDCtoSwap.toString()
         );
-        const { v: aUsdcv, r: aUsdcr, s: aUsdcs } = getSignatureFromTypedData(
-          ownerPrivateKey,
-          aUsdcMsgParams
-        );
+        const {
+          v: aUsdcv,
+          r: aUsdcr,
+          s: aUsdcs,
+        } = getSignatureFromTypedData(ownerPrivateKey, aUsdcMsgParams);
         const params = buildLiquiditySwapParams(
           [dai.address, dai.address],
           [expectedDaiAmountForEth, expectedDaiAmountForUsdc],
@@ -399,7 +388,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             [0, 0],
             userAddress,
             params,
-            0
+            0,
+            { value: H1NativeApplication_Fee.mul(2) }
           );
 
         const adapterWethBalance = await weth.balanceOf(uniswapLiquiditySwapAdapter.address);
@@ -423,16 +413,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap tokens with permit', async () => {
-        const {
-          users,
-          weth,
-          oracle,
-          dai,
-          aDai,
-          aWETH,
-          pool,
-          uniswapLiquiditySwapAdapter,
-        } = testEnv;
+        const { users, weth, oracle, dai, aDai, aWETH, pool, uniswapLiquiditySwapAdapter } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -497,7 +479,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         )
           .to.emit(uniswapLiquiditySwapAdapter, 'Swapped')
@@ -564,7 +547,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -590,7 +574,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params2,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -616,7 +601,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params3,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -645,7 +631,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params4,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -674,7 +661,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params5,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -700,7 +688,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params6,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -726,7 +715,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params7,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -752,7 +742,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params8,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -778,7 +769,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params9,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
       });
@@ -825,22 +817,15 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [flashloanAmount.toString()],
               [0],
               userAddress,
-              params
+              params,
+              { value: H1NativeApplication_Fee }
             )
         ).to.be.revertedWith('CALLER_MUST_BE_LENDING_POOL');
       });
 
       it('should work correctly with tokens of different decimals', async () => {
-        const {
-          users,
-          usdc,
-          oracle,
-          dai,
-          aDai,
-          uniswapLiquiditySwapAdapter,
-          pool,
-          deployer,
-        } = testEnv;
+        const { users, usdc, oracle, dai, aDai, uniswapLiquiditySwapAdapter, pool, deployer } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -850,12 +835,16 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         // Provide liquidity
         await usdc.mint(liquidity);
         await usdc.approve(pool.address, liquidity);
-        await pool.deposit(usdc.address, liquidity, deployer.address, 0);
+        await pool.deposit(usdc.address, liquidity, deployer.address, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         // Make a deposit for user
         await usdc.connect(user).mint(amountUSDCtoSwap);
         await usdc.connect(user).approve(pool.address, amountUSDCtoSwap);
-        await pool.connect(user).deposit(usdc.address, amountUSDCtoSwap, userAddress, 0);
+        await pool.connect(user).deposit(usdc.address, amountUSDCtoSwap, userAddress, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         const usdcPrice = await oracle.getAssetPrice(usdc.address);
         const daiPrice = await oracle.getAssetPrice(dai.address);
@@ -908,7 +897,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         )
           .to.emit(uniswapLiquiditySwapAdapter, 'Swapped')
@@ -973,22 +963,15 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('minAmountOut exceed max slippage');
       });
 
       it('should correctly swap tokens all the balance', async () => {
-        const {
-          users,
-          weth,
-          oracle,
-          dai,
-          aDai,
-          aWETH,
-          pool,
-          uniswapLiquiditySwapAdapter,
-        } = testEnv;
+        const { users, weth, oracle, dai, aDai, aWETH, pool, uniswapLiquiditySwapAdapter } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -1037,7 +1020,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         )
           .to.emit(uniswapLiquiditySwapAdapter, 'Swapped')
@@ -1062,16 +1046,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap tokens all the balance using permit', async () => {
-        const {
-          users,
-          weth,
-          oracle,
-          dai,
-          aDai,
-          aWETH,
-          pool,
-          uniswapLiquiditySwapAdapter,
-        } = testEnv;
+        const { users, weth, oracle, dai, aDai, aWETH, pool, uniswapLiquiditySwapAdapter } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -1140,7 +1116,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         )
           .to.emit(uniswapLiquiditySwapAdapter, 'Swapped')
@@ -1173,12 +1150,16 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         // Provide liquidity
         await dai.mint(parseEther('20000'));
         await dai.approve(pool.address, parseEther('20000'));
-        await pool.deposit(dai.address, parseEther('20000'), deployer.address, 0);
+        await pool.deposit(dai.address, parseEther('20000'), deployer.address, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         // Make a deposit for user
         await weth.mint(parseEther('100'));
         await weth.approve(pool.address, parseEther('100'));
-        await pool.deposit(weth.address, parseEther('100'), userAddress, 0);
+        await pool.deposit(weth.address, parseEther('100'), userAddress, 0, {
+          value: H1NativeApplication_Fee,
+        });
       });
 
       it('should correctly swap tokens and deposit the out tokens in the pool', async () => {
@@ -1216,7 +1197,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
                 s: '0x0000000000000000000000000000000000000000000000000000000000000000',
               },
             ],
-            [false]
+            [false],
+            { value: H1NativeApplication_Fee }
           )
         )
           .to.emit(uniswapLiquiditySwapAdapter, 'Swapped')
@@ -1295,7 +1277,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
                 s,
               },
             ],
-            [false]
+            [false],
+            { value: H1NativeApplication_Fee }
           )
         )
           .to.emit(uniswapLiquiditySwapAdapter, 'Swapped')
@@ -1344,7 +1327,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
                 s: '0x0000000000000000000000000000000000000000000000000000000000000000',
               },
             ],
-            [false]
+            [false],
+            { value: H1NativeApplication_Fee }
           )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -1363,7 +1347,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
                 s: '0x0000000000000000000000000000000000000000000000000000000000000000',
               },
             ],
-            [false]
+            [false],
+            { value: H1NativeApplication_Fee }
           )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -1382,7 +1367,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
                 s: '0x0000000000000000000000000000000000000000000000000000000000000000',
               },
             ],
-            [false]
+            [false],
+            { value: H1NativeApplication_Fee }
           )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -1395,7 +1381,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [amountWETHtoSwap],
               [expectedDaiAmount],
               [],
-              [false]
+              [false],
+              { value: H1NativeApplication_Fee }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
 
@@ -1414,7 +1401,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
                 s: '0x0000000000000000000000000000000000000000000000000000000000000000',
               },
             ],
-            [false]
+            [false],
+            { value: H1NativeApplication_Fee }
           )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
       });
@@ -1453,23 +1441,15 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
                 s: '0x0000000000000000000000000000000000000000000000000000000000000000',
               },
             ],
-            [false]
+            [false],
+            { value: H1NativeApplication_Fee }
           )
         ).to.be.revertedWith('minAmountOut exceed max slippage');
       });
 
       it('should correctly swap tokens and deposit multiple tokens', async () => {
-        const {
-          users,
-          weth,
-          usdc,
-          oracle,
-          dai,
-          aDai,
-          aWETH,
-          uniswapLiquiditySwapAdapter,
-          pool,
-        } = testEnv;
+        const { users, weth, usdc, oracle, dai, aDai, aWETH, uniswapLiquiditySwapAdapter, pool } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -1503,7 +1483,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         // Make a deposit for user
         await usdc.connect(user).mint(amountUSDCtoSwap);
         await usdc.connect(user).approve(pool.address, amountUSDCtoSwap);
-        await pool.connect(user).deposit(usdc.address, amountUSDCtoSwap, userAddress, 0);
+        await pool.connect(user).deposit(usdc.address, amountUSDCtoSwap, userAddress, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         const aUsdcData = await pool.getReserveData(usdc.address);
         const aUsdc = await getContract<AToken>(eContractid.AToken, aUsdcData.aTokenAddress);
@@ -1537,7 +1519,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               s: '0x0000000000000000000000000000000000000000000000000000000000000000',
             },
           ],
-          [false, false]
+          [false, false],
+          { value: H1NativeApplication_Fee }
         );
 
         const adapterWethBalance = await weth.balanceOf(uniswapLiquiditySwapAdapter.address);
@@ -1561,17 +1544,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap tokens and deposit multiple tokens using permit', async () => {
-        const {
-          users,
-          weth,
-          usdc,
-          oracle,
-          dai,
-          aDai,
-          aWETH,
-          uniswapLiquiditySwapAdapter,
-          pool,
-        } = testEnv;
+        const { users, weth, usdc, oracle, dai, aDai, aWETH, uniswapLiquiditySwapAdapter, pool } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
         const chainId = DRE.network.config.chainId || BUIDLEREVM_CHAINID;
@@ -1612,7 +1586,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         // Make a deposit for user
         await usdc.connect(user).mint(amountUSDCtoSwap);
         await usdc.connect(user).approve(pool.address, amountUSDCtoSwap);
-        await pool.connect(user).deposit(usdc.address, amountUSDCtoSwap, userAddress, 0);
+        await pool.connect(user).deposit(usdc.address, amountUSDCtoSwap, userAddress, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         const aUsdcData = await pool.getReserveData(usdc.address);
         const aUsdc = await getContract<AToken>(eContractid.AToken, aUsdcData.aTokenAddress);
@@ -1635,10 +1611,11 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
           deadline,
           amountWETHtoSwap.toString()
         );
-        const { v: aWETHv, r: aWETHr, s: aWETHs } = getSignatureFromTypedData(
-          ownerPrivateKey,
-          aWethMsgParams
-        );
+        const {
+          v: aWETHv,
+          r: aWETHr,
+          s: aWETHs,
+        } = getSignatureFromTypedData(ownerPrivateKey, aWethMsgParams);
 
         const aUsdcNonce = (await aUsdc._nonces(userAddress)).toNumber();
         const aUsdcMsgParams = buildPermitParams(
@@ -1652,10 +1629,11 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
           deadline,
           amountUSDCtoSwap.toString()
         );
-        const { v: aUsdcv, r: aUsdcr, s: aUsdcs } = getSignatureFromTypedData(
-          ownerPrivateKey,
-          aUsdcMsgParams
-        );
+        const {
+          v: aUsdcv,
+          r: aUsdcr,
+          s: aUsdcs,
+        } = getSignatureFromTypedData(ownerPrivateKey, aUsdcMsgParams);
 
         await uniswapLiquiditySwapAdapter.connect(user).swapAndDeposit(
           [weth.address, usdc.address],
@@ -1678,7 +1656,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               s: aUsdcs,
             },
           ],
-          [false, false]
+          [false, false],
+          { value: H1NativeApplication_Fee }
         );
 
         const adapterWethBalance = await weth.balanceOf(uniswapLiquiditySwapAdapter.address);
@@ -1745,7 +1724,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
                 s: '0x0000000000000000000000000000000000000000000000000000000000000000',
               },
             ],
-            [false]
+            [false],
+            { value: H1NativeApplication_Fee }
           )
         )
           .to.emit(uniswapLiquiditySwapAdapter, 'Swapped')
@@ -1831,7 +1811,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
                 s,
               },
             ],
-            [false]
+            [false],
+            { value: H1NativeApplication_Fee }
           )
         )
           .to.emit(uniswapLiquiditySwapAdapter, 'Swapped')

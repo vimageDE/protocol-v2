@@ -54,7 +54,7 @@ contract UniswapRepayAdapter is BaseUniswapAdapter {
     uint256[] calldata premiums,
     address initiator,
     bytes calldata params
-  ) external override returns (bool) {
+  ) external payable override returns (bool) {
     require(msg.sender == address(LENDING_POOL), 'CALLER_MUST_BE_LENDING_POOL');
 
     RepayParams memory decodedParams = _decodeParams(params);
@@ -96,14 +96,14 @@ contract UniswapRepayAdapter is BaseUniswapAdapter {
     uint256 debtRateMode,
     PermitSignature calldata permitSignature,
     bool useEthPath
-  ) external {
+  ) external payable {
     DataTypes.ReserveData memory collateralReserveData = _getReserveData(collateralAsset);
     DataTypes.ReserveData memory debtReserveData = _getReserveData(debtAsset);
 
-    address debtToken =
-      DataTypes.InterestRateMode(debtRateMode) == DataTypes.InterestRateMode.STABLE
-        ? debtReserveData.stableDebtTokenAddress
-        : debtReserveData.variableDebtTokenAddress;
+    address debtToken = DataTypes.InterestRateMode(debtRateMode) ==
+      DataTypes.InterestRateMode.STABLE
+      ? debtReserveData.stableDebtTokenAddress
+      : debtReserveData.variableDebtTokenAddress;
 
     uint256 currentDebt = IERC20(debtToken).balanceOf(msg.sender);
     uint256 amountToRepay = debtRepayAmount <= currentDebt ? debtRepayAmount : currentDebt;
@@ -115,8 +115,12 @@ contract UniswapRepayAdapter is BaseUniswapAdapter {
       }
 
       // Get exact collateral needed for the swap to avoid leftovers
-      uint256[] memory amounts =
-        _getAmountsIn(collateralAsset, debtAsset, amountToRepay, useEthPath);
+      uint256[] memory amounts = _getAmountsIn(
+        collateralAsset,
+        debtAsset,
+        amountToRepay,
+        useEthPath
+      );
       require(amounts[0] <= maxCollateralToSwap, 'slippage too high');
 
       // Pull aTokens from user
@@ -144,7 +148,7 @@ contract UniswapRepayAdapter is BaseUniswapAdapter {
     // Repay debt. Approves 0 first to comply with tokens that implement the anti frontrunning approval fix
     IERC20(debtAsset).safeApprove(address(LENDING_POOL), 0);
     IERC20(debtAsset).safeApprove(address(LENDING_POOL), amountToRepay);
-    LENDING_POOL.repay(debtAsset, amountToRepay, debtRateMode, msg.sender);
+    LENDING_POOL.repay{value: msg.value}(debtAsset, amountToRepay, debtRateMode, msg.sender);
   }
 
   /**
@@ -176,7 +180,7 @@ contract UniswapRepayAdapter is BaseUniswapAdapter {
     IERC20(debtAsset).safeApprove(address(LENDING_POOL), 0);
     IERC20(debtAsset).safeApprove(address(LENDING_POOL), amount);
     uint256 repaidAmount = IERC20(debtAsset).balanceOf(address(this));
-    LENDING_POOL.repay(debtAsset, amount, rateMode, initiator);
+    LENDING_POOL.repay{value: msg.value}(debtAsset, amount, rateMode, initiator);
     repaidAmount = repaidAmount.sub(IERC20(debtAsset).balanceOf(address(this)));
 
     if (collateralAsset != debtAsset) {
@@ -186,8 +190,12 @@ contract UniswapRepayAdapter is BaseUniswapAdapter {
       }
 
       uint256 neededForFlashLoanDebt = repaidAmount.add(premium);
-      uint256[] memory amounts =
-        _getAmountsIn(collateralAsset, debtAsset, neededForFlashLoanDebt, useEthPath);
+      uint256[] memory amounts = _getAmountsIn(
+        collateralAsset,
+        debtAsset,
+        neededForFlashLoanDebt,
+        useEthPath
+      );
       require(amounts[0] <= maxCollateralToSwap, 'slippage too high');
 
       // Pull aTokens from user
@@ -248,8 +256,7 @@ contract UniswapRepayAdapter is BaseUniswapAdapter {
       bytes32 r,
       bytes32 s,
       bool useEthPath
-    ) =
-      abi.decode(
+    ) = abi.decode(
         params,
         (address, uint256, uint256, uint256, uint256, uint8, bytes32, bytes32, bool)
       );

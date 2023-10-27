@@ -54,6 +54,7 @@ import { initReservesByHelper, configureReservesByHelper } from '../../helpers/i
 import AaveConfig from '../../markets/aave';
 import { oneEther, ZERO_ADDRESS } from '../../helpers/constants';
 import {
+  getFeeContract,
   getLendingPool,
   getLendingPoolConfiguratorProxy,
   getPairsTokenAggregator,
@@ -119,8 +120,11 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
   );
 
   const lendingPoolImpl = await deployLendingPool();
+  const feeContract = await getFeeContract();
 
-  await waitForTx(await addressesProvider.setLendingPoolImpl(lendingPoolImpl.address));
+  await waitForTx(
+    await addressesProvider.setLendingPoolImpl(lendingPoolImpl.address, feeContract.address)
+  );
 
   const lendingPoolAddress = await addressesProvider.getLendingPool();
   const lendingPoolProxy = await getLendingPool(lendingPoolAddress);
@@ -301,11 +305,15 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
 
   const augustusRegistry = await deployMockParaSwapAugustusRegistry([augustus.address]);
 
-  await deployParaSwapLiquiditySwapAdapter([addressesProvider.address, augustusRegistry.address]);
+  await deployParaSwapLiquiditySwapAdapter([
+    addressesProvider.address,
+    augustusRegistry.address,
+    feeContract.address,
+  ]);
 
   await deployWalletBalancerProvider();
 
-  const gateWay = await deployWETHGateway([mockTokens.WETH.address]);
+  const gateWay = await deployWETHGateway([mockTokens.WETH.address, feeContract.address]);
   await authorizeWETHGateway(gateWay.address, lendingPoolAddress);
 
   console.timeEnd('setup');

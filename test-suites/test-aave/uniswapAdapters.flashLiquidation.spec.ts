@@ -13,6 +13,7 @@ import { ProtocolErrors, RateMode } from '../../helpers/types';
 import { APPROVAL_AMOUNT_LENDING_POOL, MAX_UINT_AMOUNT, oneEther } from '../../helpers/constants';
 import { getUserData } from './helpers/utils/helpers';
 import { calcExpectedStableDebtTokenBalance } from './helpers/utils/calculations';
+import { H1NativeApplication_Fee } from '../../helpers/h1';
 const { expect } = require('chai');
 
 makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
@@ -40,7 +41,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
 
     await pool
       .connect(depositor.signer)
-      .deposit(dai.address, amountDAItoDeposit, depositor.address, '0');
+      .deposit(dai.address, amountDAItoDeposit, depositor.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
     //user 2 deposits 1 ETH
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
@@ -52,7 +55,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
 
     await pool
       .connect(borrower.signer)
-      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
+      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
 
     //user 2 borrows
 
@@ -69,7 +74,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
 
     await pool
       .connect(borrower.signer)
-      .borrow(dai.address, amountDAIToBorrow, RateMode.Stable, '0', borrower.address);
+      .borrow(dai.address, amountDAIToBorrow, RateMode.Stable, '0', borrower.address, {
+        value: H1NativeApplication_Fee,
+      });
 
     const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
 
@@ -107,7 +114,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
 
     await pool
       .connect(depositor.signer)
-      .deposit(dai.address, amountDAItoDeposit, depositor.address, '0');
+      .deposit(dai.address, amountDAItoDeposit, depositor.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
     //user 2 deposits 1 ETH
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
@@ -119,7 +128,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
 
     await pool
       .connect(borrower.signer)
-      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
+      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
 
     //user 2 borrows
 
@@ -136,7 +147,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
     await waitForTx(
       await pool
         .connect(borrower.signer)
-        .borrow(dai.address, amountDAIToBorrow, RateMode.Stable, '0', borrower.address)
+        .borrow(dai.address, amountDAIToBorrow, RateMode.Stable, '0', borrower.address, {
+          value: H1NativeApplication_Fee,
+        })
     );
 
     const userGlobalDataBefore2 = await pool.getUserAccountData(borrower.address);
@@ -147,7 +160,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
 
     await pool
       .connect(borrower.signer)
-      .borrow(weth.address, amountWETHToBorrow, RateMode.Variable, '0', borrower.address);
+      .borrow(weth.address, amountWETHToBorrow, RateMode.Variable, '0', borrower.address, {
+        value: H1NativeApplication_Fee,
+      });
 
     const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
 
@@ -213,15 +228,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         await depositAndHFBelowOne();
         await increaseTime(100);
 
-        const {
-          dai,
-          weth,
-          users,
-          pool,
-          oracle,
-          helpersContract,
-          flashLiquidationAdapter,
-        } = testEnv;
+        const { dai, weth, users, pool, oracle, helpersContract, flashLiquidationAdapter } =
+          testEnv;
 
         const liquidator = users[3];
         const borrower = users[1];
@@ -286,7 +294,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             [0],
             borrower.address,
             params,
-            0
+            0,
+            { value: H1NativeApplication_Fee.mul(2) }
           );
 
         // Expect Swapped event
@@ -427,7 +436,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             [0],
             borrower.address,
             params,
-            0
+            0,
+            { value: H1NativeApplication_Fee.mul(2) }
           );
 
         // Dont expect Swapped event due is same asset
@@ -460,15 +470,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         await depositAndHFBelowOne();
         await increaseTime(100);
 
-        const {
-          dai,
-          weth,
-          users,
-          pool,
-          oracle,
-          helpersContract,
-          flashLiquidationAdapter,
-        } = testEnv;
+        const { dai, weth, users, pool, oracle, helpersContract, flashLiquidationAdapter } =
+          testEnv;
 
         const liquidator = users[3];
         const borrower = users[1];
@@ -532,7 +535,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             [0],
             borrower.address,
             params,
-            0
+            0,
+            { value: H1NativeApplication_Fee.mul(2) }
           );
 
         // Expect Swapped event
@@ -615,15 +619,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         await depositAndHFBelowOne();
         await increaseTime(100);
 
-        const {
-          dai,
-          weth,
-          users,
-          pool,
-          oracle,
-          helpersContract,
-          flashLiquidationAdapter,
-        } = testEnv;
+        const { dai, weth, users, pool, oracle, helpersContract, flashLiquidationAdapter } =
+          testEnv;
 
         const liquidator = users[3];
         const borrower = users[1];
@@ -688,7 +685,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             [0],
             borrower.address,
             params,
-            0
+            0,
+            { value: H1NativeApplication_Fee.mul(2) }
           );
 
         // Expect Swapped event
@@ -751,7 +749,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               borrower.address,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
       });
@@ -796,7 +795,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               borrower.address,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith(LP_LIQUIDATION_CALL_FAILED);
       });
@@ -841,7 +841,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               borrower.address,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('INCONSISTENT_PARAMS');
       });

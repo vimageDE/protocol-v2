@@ -13,6 +13,7 @@ import {
   getStableDebtToken,
   getVariableDebtToken,
 } from '../../helpers/contracts-getters';
+import { H1NativeApplication_Fee } from '../../helpers/h1';
 
 const { expect } = require('chai');
 
@@ -40,7 +41,9 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
 
     await weth.approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
-    await pool.deposit(weth.address, amountToDeposit, userAddress, '0');
+    await pool.deposit(weth.address, amountToDeposit, userAddress, '0', {
+      value: H1NativeApplication_Fee,
+    });
   });
 
   it('Takes WETH flashloan with mode = 0, returns the funds correctly', async () => {
@@ -53,7 +56,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
       [0],
       _mockFlashLoanReceiver.address,
       '0x10',
-      '0'
+      '0',
+      { value: H1NativeApplication_Fee }
     );
 
     ethers.utils.parseUnits('10000');
@@ -83,7 +87,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
       [0],
       _mockFlashLoanReceiver.address,
       '0x10',
-      '0'
+      '0',
+      { value: H1NativeApplication_Fee }
     );
 
     const reserveData = await helpersContract.getReserveData(weth.address);
@@ -115,7 +120,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
           [0],
           caller.address,
           '0x10',
-          '0'
+          '0',
+          { value: H1NativeApplication_Fee }
         )
     ).to.be.revertedWith(SAFEERC20_LOWLEVEL_CALL);
   });
@@ -136,7 +142,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
           [0],
           caller.address,
           '0x10',
-          '0'
+          '0',
+          { value: H1NativeApplication_Fee }
         )
     ).to.be.revertedWith(LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN);
   });
@@ -157,7 +164,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
           [4],
           caller.address,
           '0x10',
-          '0'
+          '0',
+          { value: H1NativeApplication_Fee }
         )
     ).to.be.reverted;
   });
@@ -173,7 +181,9 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
 
     const amountToDeposit = await convertToCurrencyDecimals(dai.address, '1000');
 
-    await pool.connect(caller.signer).deposit(dai.address, amountToDeposit, caller.address, '0');
+    await pool.connect(caller.signer).deposit(dai.address, amountToDeposit, caller.address, '0', {
+      value: H1NativeApplication_Fee,
+    });
 
     await _mockFlashLoanReceiver.setFailExecutionTransfer(true);
 
@@ -186,7 +196,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
         [2],
         caller.address,
         '0x10',
-        '0'
+        '0',
+        { value: H1NativeApplication_Fee }
       );
     const { variableDebtTokenAddress } = await helpersContract.getReserveTokensAddresses(
       weth.address
@@ -211,7 +222,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
         [2],
         caller.address,
         '0x10',
-        '0'
+        '0',
+        { value: H1NativeApplication_Fee }
       ),
       TRANSFER_AMOUNT_EXCEEDS_BALANCE
     ).to.be.revertedWith(SAFEERC20_LOWLEVEL_CALL);
@@ -229,7 +241,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
         [2],
         caller.address,
         '0x10',
-        '0'
+        '0',
+        { value: H1NativeApplication_Fee }
       )
     ).to.be.reverted;
   });
@@ -244,7 +257,9 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
 
     const amountToDeposit = await convertToCurrencyDecimals(usdc.address, '1000');
 
-    await pool.deposit(usdc.address, amountToDeposit, userAddress, '0');
+    await pool.deposit(usdc.address, amountToDeposit, userAddress, '0', {
+      value: H1NativeApplication_Fee,
+    });
   });
 
   it('Takes out a 500 USDC flashloan, returns the funds correctly', async () => {
@@ -263,7 +278,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
       [0],
       _mockFlashLoanReceiver.address,
       '0x10',
-      '0'
+      '0',
+      { value: H1NativeApplication_Fee }
     );
 
     const reserveDataAfter = helpersContract.getReserveData(usdc.address);
@@ -308,7 +324,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
           [2],
           caller.address,
           '0x10',
-          '0'
+          '0',
+          { value: H1NativeApplication_Fee }
         )
     ).to.be.revertedWith(VL_COLLATERAL_BALANCE_IS_0);
   });
@@ -324,7 +341,9 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
 
     const amountToDeposit = await convertToCurrencyDecimals(weth.address, '5');
 
-    await pool.connect(caller.signer).deposit(weth.address, amountToDeposit, caller.address, '0');
+    await pool.connect(caller.signer).deposit(weth.address, amountToDeposit, caller.address, '0', {
+      value: H1NativeApplication_Fee,
+    });
 
     await _mockFlashLoanReceiver.setFailExecutionTransfer(true);
 
@@ -339,7 +358,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
         [2],
         caller.address,
         '0x10',
-        '0'
+        '0',
+        { value: H1NativeApplication_Fee }
       );
     const { variableDebtTokenAddress } = await helpersContract.getReserveTokensAddresses(
       usdc.address
@@ -362,7 +382,9 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
 
     const amountToDeposit = await convertToCurrencyDecimals(dai.address, '1000');
 
-    await pool.connect(caller.signer).deposit(dai.address, amountToDeposit, caller.address, '0');
+    await pool.connect(caller.signer).deposit(dai.address, amountToDeposit, caller.address, '0', {
+      value: H1NativeApplication_Fee,
+    });
 
     const flashAmount = ethers.utils.parseEther('0.8');
 
@@ -379,7 +401,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
           [0],
           caller.address,
           '0x10',
-          '0'
+          '0',
+          { value: H1NativeApplication_Fee }
         )
     ).to.be.revertedWith(SAFEERC20_LOWLEVEL_CALL);
   });
@@ -402,7 +425,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
         [1],
         caller.address,
         '0x10',
-        '0'
+        '0',
+        { value: H1NativeApplication_Fee }
       );
 
     const { stableDebtTokenAddress } = await helpersContract.getReserveTokensAddresses(
@@ -431,7 +455,9 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
 
     await pool
       .connect(onBehalfOf.signer)
-      .deposit(dai.address, amountToDeposit, onBehalfOf.address, '0');
+      .deposit(dai.address, amountToDeposit, onBehalfOf.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
 
     const flashAmount = ethers.utils.parseEther('0.8');
 
@@ -447,7 +473,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
           [1],
           onBehalfOf.address,
           '0x10',
-          '0'
+          '0',
+          { value: H1NativeApplication_Fee }
         )
     ).to.be.revertedWith(LP_BORROW_ALLOWANCE_NOT_ENOUGH);
   });
@@ -478,7 +505,8 @@ makeSuite('LendingPool FlashLoan function', (testEnv: TestEnv) => {
         [1],
         onBehalfOf.address,
         '0x10',
-        '0'
+        '0',
+        { value: H1NativeApplication_Fee }
       );
 
     const { stableDebtTokenAddress } = await helpersContract.getReserveTokensAddresses(

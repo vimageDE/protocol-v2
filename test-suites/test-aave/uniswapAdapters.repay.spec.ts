@@ -18,6 +18,7 @@ import { StableDebtToken } from '../../types/StableDebtToken';
 import { BUIDLEREVM_CHAINID } from '../../helpers/buidler-constants';
 import { MAX_UINT_AMOUNT } from '../../helpers/constants';
 import { VariableDebtToken } from '../../types';
+import { H1NativeApplication_Fee } from '../../helpers/h1';
 const { parseEther } = ethers.utils;
 
 const { expect } = require('chai');
@@ -46,33 +47,47 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       // Provide liquidity
       await dai.mint(parseEther('20000'));
       await dai.approve(pool.address, parseEther('20000'));
-      await pool.deposit(dai.address, parseEther('20000'), deployer.address, 0);
+      await pool.deposit(dai.address, parseEther('20000'), deployer.address, 0, {
+        value: H1NativeApplication_Fee,
+      });
 
       const usdcLiquidity = await convertToCurrencyDecimals(usdc.address, '2000000');
       await usdc.mint(usdcLiquidity);
       await usdc.approve(pool.address, usdcLiquidity);
-      await pool.deposit(usdc.address, usdcLiquidity, deployer.address, 0);
+      await pool.deposit(usdc.address, usdcLiquidity, deployer.address, 0, {
+        value: H1NativeApplication_Fee,
+      });
 
       await weth.mint(parseEther('100'));
       await weth.approve(pool.address, parseEther('100'));
-      await pool.deposit(weth.address, parseEther('100'), deployer.address, 0);
+      await pool.deposit(weth.address, parseEther('100'), deployer.address, 0, {
+        value: H1NativeApplication_Fee,
+      });
 
       await aave.mint(parseEther('1000000'));
       await aave.approve(pool.address, parseEther('1000000'));
-      await pool.deposit(aave.address, parseEther('1000000'), deployer.address, 0);
+      await pool.deposit(aave.address, parseEther('1000000'), deployer.address, 0, {
+        value: H1NativeApplication_Fee,
+      });
 
       // Make a deposit for user
       await weth.mint(parseEther('1000'));
       await weth.approve(pool.address, parseEther('1000'));
-      await pool.deposit(weth.address, parseEther('1000'), userAddress, 0);
+      await pool.deposit(weth.address, parseEther('1000'), userAddress, 0, {
+        value: H1NativeApplication_Fee,
+      });
 
       await aave.mint(parseEther('1000000'));
       await aave.approve(pool.address, parseEther('1000000'));
-      await pool.deposit(aave.address, parseEther('1000000'), userAddress, 0);
+      await pool.deposit(aave.address, parseEther('1000000'), userAddress, 0, {
+        value: H1NativeApplication_Fee,
+      });
 
       await usdc.mint(usdcLiquidity);
       await usdc.approve(pool.address, usdcLiquidity);
-      await pool.deposit(usdc.address, usdcLiquidity, userAddress, 0);
+      await pool.deposit(usdc.address, usdcLiquidity, userAddress, 0, {
+        value: H1NativeApplication_Fee,
+      });
     });
 
     describe('constructor', () => {
@@ -99,16 +114,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
 
     describe('executeOperation', () => {
       it('should correctly swap tokens and repay debt', async () => {
-        const {
-          users,
-          pool,
-          weth,
-          aWETH,
-          oracle,
-          dai,
-          uniswapRepayAdapter,
-          helpersContract,
-        } = testEnv;
+        const { users, pool, weth, aWETH, oracle, dai, uniswapRepayAdapter, helpersContract } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -121,7 +128,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const daiStableDebtTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -173,7 +182,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         )
           .to.emit(uniswapRepayAdapter, 'Swapped')
@@ -193,16 +203,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap tokens and repay debt with permit', async () => {
-        const {
-          users,
-          pool,
-          weth,
-          aWETH,
-          oracle,
-          dai,
-          uniswapRepayAdapter,
-          helpersContract,
-        } = testEnv;
+        const { users, pool, weth, aWETH, oracle, dai, uniswapRepayAdapter, helpersContract } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -215,7 +217,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const daiStableDebtTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -288,7 +292,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         )
           .to.emit(uniswapRepayAdapter, 'Swapped')
@@ -321,7 +326,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const liquidityToSwap = amountWETHtoSwap;
         await aWETH.connect(user).approve(uniswapRepayAdapter.address, liquidityToSwap);
@@ -348,7 +355,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [expectedDaiAmount.toString()],
               [0],
               userAddress,
-              params
+              params,
+              { value: H1NativeApplication_Fee }
             )
         ).to.be.revertedWith('CALLER_MUST_BE_LENDING_POOL');
       });
@@ -370,7 +378,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 2, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 2, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const liquidityToSwap = amountWETHtoSwap;
         await aWETH.connect(user).approve(uniswapRepayAdapter.address, liquidityToSwap);
@@ -399,7 +409,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.reverted;
       });
@@ -447,7 +458,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.reverted;
       });
@@ -466,7 +478,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const bigMaxAmountToSwap = amountWETHtoSwap.mul(2);
         await aWETH.connect(user).approve(uniswapRepayAdapter.address, bigMaxAmountToSwap);
@@ -506,22 +520,15 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         ).to.be.revertedWith('maxAmountToSwap exceed max slippage');
       });
 
       it('should swap, repay debt and pull the needed ATokens leaving no leftovers', async () => {
-        const {
-          users,
-          pool,
-          weth,
-          aWETH,
-          oracle,
-          dai,
-          uniswapRepayAdapter,
-          helpersContract,
-        } = testEnv;
+        const { users, pool, weth, aWETH, oracle, dai, uniswapRepayAdapter, helpersContract } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -534,7 +541,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const daiStableDebtTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -591,7 +600,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               [0],
               userAddress,
               params,
-              0
+              0,
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         )
           .to.emit(uniswapRepayAdapter, 'Swapped')
@@ -615,16 +625,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap tokens and repay the whole stable debt', async () => {
-        const {
-          users,
-          pool,
-          weth,
-          aWETH,
-          oracle,
-          dai,
-          uniswapRepayAdapter,
-          helpersContract,
-        } = testEnv;
+        const { users, pool, weth, aWETH, oracle, dai, uniswapRepayAdapter, helpersContract } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -637,7 +639,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const daiStableDebtTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -687,7 +691,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             [0],
             userAddress,
             params,
-            0
+            0,
+            { value: H1NativeApplication_Fee.mul(2) }
           );
 
         const adapterWethBalance = await weth.balanceOf(uniswapRepayAdapter.address);
@@ -706,16 +711,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap tokens and repay the whole variable debt', async () => {
-        const {
-          users,
-          pool,
-          weth,
-          aWETH,
-          oracle,
-          dai,
-          uniswapRepayAdapter,
-          helpersContract,
-        } = testEnv;
+        const { users, pool, weth, aWETH, oracle, dai, uniswapRepayAdapter, helpersContract } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -728,7 +725,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 2, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 2, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const daiStableVariableTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -780,7 +779,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             [0],
             userAddress,
             params,
-            0
+            0,
+            { value: H1NativeApplication_Fee.mul(2) }
           );
 
         const adapterWethBalance = await weth.balanceOf(uniswapRepayAdapter.address);
@@ -806,13 +806,17 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         // Add deposit for user
         await dai.mint(parseEther('30'));
         await dai.approve(pool.address, parseEther('30'));
-        await pool.deposit(dai.address, parseEther('30'), userAddress, 0);
+        await pool.deposit(dai.address, parseEther('30'), userAddress, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         const amountCollateralToSwap = parseEther('10');
         const debtAmount = parseEther('10');
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, debtAmount, 2, 0, userAddress);
+        await pool
+          .connect(user)
+          .borrow(dai.address, debtAmount, 2, 0, userAddress, { value: H1NativeApplication_Fee });
 
         const daiVariableDebtTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -856,7 +860,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             [0],
             userAddress,
             params,
-            0
+            0,
+            { value: H1NativeApplication_Fee.mul(2) }
           );
 
         const adapterDaiBalance = await dai.balanceOf(uniswapRepayAdapter.address);
@@ -889,16 +894,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
 
     describe('swapAndRepay', () => {
       it('should correctly swap tokens and repay debt', async () => {
-        const {
-          users,
-          pool,
-          weth,
-          aWETH,
-          oracle,
-          dai,
-          uniswapRepayAdapter,
-          helpersContract,
-        } = testEnv;
+        const { users, pool, weth, aWETH, oracle, dai, uniswapRepayAdapter, helpersContract } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -911,7 +908,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const daiStableDebtTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -945,7 +944,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             r: '0x0000000000000000000000000000000000000000000000000000000000000000',
             s: '0x0000000000000000000000000000000000000000000000000000000000000000',
           },
-          false
+          false,
+          { value: H1NativeApplication_Fee }
         );
 
         const adapterWethBalance = await weth.balanceOf(uniswapRepayAdapter.address);
@@ -962,16 +962,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap tokens and repay debt with permit', async () => {
-        const {
-          users,
-          pool,
-          weth,
-          aWETH,
-          oracle,
-          dai,
-          uniswapRepayAdapter,
-          helpersContract,
-        } = testEnv;
+        const { users, pool, weth, aWETH, oracle, dai, uniswapRepayAdapter, helpersContract } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -984,7 +976,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const daiStableDebtTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -1039,7 +1033,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             r,
             s,
           },
-          false
+          false,
+          { value: H1NativeApplication_Fee }
         );
 
         const adapterWethBalance = await weth.balanceOf(uniswapRepayAdapter.address);
@@ -1088,7 +1083,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               r: '0x0000000000000000000000000000000000000000000000000000000000000000',
               s: '0x0000000000000000000000000000000000000000000000000000000000000000',
             },
-            false
+            false,
+            { value: H1NativeApplication_Fee }
           )
         ).to.be.reverted;
       });
@@ -1107,7 +1103,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const bigMaxAmountToSwap = amountWETHtoSwap.mul(2);
         await aWETH.connect(user).approve(uniswapRepayAdapter.address, bigMaxAmountToSwap);
@@ -1130,22 +1128,15 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
               r: '0x0000000000000000000000000000000000000000000000000000000000000000',
               s: '0x0000000000000000000000000000000000000000000000000000000000000000',
             },
-            false
+            false,
+            { value: H1NativeApplication_Fee }
           )
         ).to.be.revertedWith('maxAmountToSwap exceed max slippage');
       });
 
       it('should swap, repay debt and pull the needed ATokens leaving no leftovers', async () => {
-        const {
-          users,
-          pool,
-          weth,
-          aWETH,
-          oracle,
-          dai,
-          uniswapRepayAdapter,
-          helpersContract,
-        } = testEnv;
+        const { users, pool, weth, aWETH, oracle, dai, uniswapRepayAdapter, helpersContract } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -1158,7 +1149,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const daiStableDebtTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -1197,7 +1190,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             r: '0x0000000000000000000000000000000000000000000000000000000000000000',
             s: '0x0000000000000000000000000000000000000000000000000000000000000000',
           },
-          false
+          false,
+          { value: H1NativeApplication_Fee }
         );
 
         const adapterWethBalance = await weth.balanceOf(uniswapRepayAdapter.address);
@@ -1218,16 +1212,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap tokens and repay the whole stable debt', async () => {
-        const {
-          users,
-          pool,
-          weth,
-          aWETH,
-          oracle,
-          dai,
-          uniswapRepayAdapter,
-          helpersContract,
-        } = testEnv;
+        const { users, pool, weth, aWETH, oracle, dai, uniswapRepayAdapter, helpersContract } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -1240,7 +1226,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 1, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const daiStableDebtTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -1282,7 +1270,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             r: '0x0000000000000000000000000000000000000000000000000000000000000000',
             s: '0x0000000000000000000000000000000000000000000000000000000000000000',
           },
-          false
+          false,
+          { value: H1NativeApplication_Fee }
         );
 
         const adapterWethBalance = await weth.balanceOf(uniswapRepayAdapter.address);
@@ -1301,16 +1290,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
       });
 
       it('should correctly swap tokens and repay the whole variable debt', async () => {
-        const {
-          users,
-          pool,
-          weth,
-          aWETH,
-          oracle,
-          dai,
-          uniswapRepayAdapter,
-          helpersContract,
-        } = testEnv;
+        const { users, pool, weth, aWETH, oracle, dai, uniswapRepayAdapter, helpersContract } =
+          testEnv;
         const user = users[0].signer;
         const userAddress = users[0].address;
 
@@ -1323,7 +1304,9 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         );
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 2, 0, userAddress);
+        await pool.connect(user).borrow(dai.address, expectedDaiAmount, 2, 0, userAddress, {
+          value: H1NativeApplication_Fee,
+        });
 
         const daiStableVariableTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -1367,7 +1350,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             r: '0x0000000000000000000000000000000000000000000000000000000000000000',
             s: '0x0000000000000000000000000000000000000000000000000000000000000000',
           },
-          false
+          false,
+          { value: H1NativeApplication_Fee }
         );
 
         const adapterWethBalance = await weth.balanceOf(uniswapRepayAdapter.address);
@@ -1393,14 +1377,18 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
         // Add deposit for user
         await dai.mint(parseEther('30'));
         await dai.approve(pool.address, parseEther('30'));
-        await pool.deposit(dai.address, parseEther('30'), userAddress, 0);
+        await pool.deposit(dai.address, parseEther('30'), userAddress, 0, {
+          value: H1NativeApplication_Fee,
+        });
 
         const amountCollateralToSwap = parseEther('4');
 
         const debtAmount = parseEther('3');
 
         // Open user Debt
-        await pool.connect(user).borrow(dai.address, debtAmount, 2, 0, userAddress);
+        await pool
+          .connect(user)
+          .borrow(dai.address, debtAmount, 2, 0, userAddress, { value: H1NativeApplication_Fee });
 
         const daiVariableDebtTokenAddress = (
           await helpersContract.getReserveTokensAddresses(dai.address)
@@ -1432,7 +1420,8 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             r: '0x0000000000000000000000000000000000000000000000000000000000000000',
             s: '0x0000000000000000000000000000000000000000000000000000000000000000',
           },
-          false
+          false,
+          { value: H1NativeApplication_Fee }
         );
 
         const adapterDaiBalance = await dai.balanceOf(uniswapRepayAdapter.address);

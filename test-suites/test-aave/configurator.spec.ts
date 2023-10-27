@@ -3,6 +3,7 @@ import { APPROVAL_AMOUNT_LENDING_POOL, RAY } from '../../helpers/constants';
 import { convertToCurrencyDecimals } from '../../helpers/contracts-helpers';
 import { ProtocolErrors } from '../../helpers/types';
 import { strategyWETH } from '../../markets/aave/reservesConfigs';
+import { H1NativeApplication_Fee } from '../../helpers/h1';
 
 const { expect } = require('chai');
 
@@ -376,7 +377,9 @@ makeSuite('LendingPoolConfigurator', (testEnv: TestEnv) => {
     const amountDAItoDeposit = await convertToCurrencyDecimals(dai.address, '1000');
 
     //user 1 deposits 1000 DAI
-    await pool.deposit(dai.address, amountDAItoDeposit, userAddress, '0');
+    await pool.deposit(dai.address, amountDAItoDeposit, userAddress, '0', {
+      value: H1NativeApplication_Fee,
+    });
 
     await expect(
       configurator.deactivateReserve(dai.address),

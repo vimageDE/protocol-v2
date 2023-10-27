@@ -51,6 +51,7 @@ import { initReservesByHelper, configureReservesByHelper } from '../../helpers/i
 import AmmConfig from '../../markets/amm';
 import { oneEther, ZERO_ADDRESS } from '../../helpers/constants';
 import {
+  getFeeContract,
   getLendingPool,
   getLendingPoolConfiguratorProxy,
   getPairsTokenAggregator,
@@ -122,7 +123,11 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
 
   const lendingPoolImpl = await deployLendingPool();
 
-  await waitForTx(await addressesProvider.setLendingPoolImpl(lendingPoolImpl.address));
+  const feeContract = await getFeeContract();
+
+  await waitForTx(
+    await addressesProvider.setLendingPoolImpl(lendingPoolImpl.address, feeContract.address)
+  );
 
   const lendingPoolAddress = await addressesProvider.getLendingPool();
   const lendingPoolProxy = await getLendingPool(lendingPoolAddress);
@@ -294,7 +299,7 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
 
   await deployWalletBalancerProvider();
 
-  const gateWay = await deployWETHGateway([mockTokens.WETH.address]);
+  const gateWay = await deployWETHGateway([mockTokens.WETH.address, feeContract.address]);
   await authorizeWETHGateway(gateWay.address, lendingPoolAddress);
 
   console.timeEnd('setup');

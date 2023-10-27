@@ -6,6 +6,7 @@ import { ethers } from 'ethers';
 import { ZERO_ADDRESS } from '../../helpers/constants';
 import { waitForTx } from '../../helpers/misc-utils';
 import { deployLendingPool } from '../../helpers/contracts-deployments';
+import { getFeeContract } from '../../helpers/contracts-getters';
 
 const { utils } = ethers;
 
@@ -16,10 +17,10 @@ makeSuite('LendingPoolAddressesProvider', (testEnv: TestEnv) => {
     const { INVALID_OWNER_REVERT_MSG } = ProtocolErrors;
 
     await addressesProvider.transferOwnership(users[1].address);
+    const feeContract = await getFeeContract();
 
     for (const contractFunction of [
       addressesProvider.setMarketId,
-      addressesProvider.setLendingPoolImpl,
       addressesProvider.setLendingPoolConfiguratorImpl,
       addressesProvider.setLendingPoolCollateralManager,
       addressesProvider.setPoolAdmin,
@@ -28,6 +29,10 @@ makeSuite('LendingPoolAddressesProvider', (testEnv: TestEnv) => {
     ]) {
       await expect(contractFunction(mockAddress)).to.be.revertedWith(INVALID_OWNER_REVERT_MSG);
     }
+
+    await expect(
+      addressesProvider.setLendingPoolImpl(mockAddress, feeContract.address)
+    ).to.be.revertedWith(INVALID_OWNER_REVERT_MSG);
 
     await expect(
       addressesProvider.setAddress(utils.keccak256(utils.toUtf8Bytes('RANDOM_ID')), mockAddress)

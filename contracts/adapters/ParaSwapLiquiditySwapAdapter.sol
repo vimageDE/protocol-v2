@@ -9,6 +9,7 @@ import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detai
 import {IERC20WithPermit} from '../interfaces/IERC20WithPermit.sol';
 import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
 import {ReentrancyGuard} from '../dependencies/openzeppelin/contracts/ReentrancyGuard.sol';
+import '../h1/IFeeContract.sol';
 
 /**
  * @title ParaSwapLiquiditySwapAdapter
@@ -16,11 +17,15 @@ import {ReentrancyGuard} from '../dependencies/openzeppelin/contracts/Reentrancy
  * @author Jason Raymond Bell
  */
 contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuard {
+  IFeeContract private feeContract;
+
   constructor(
     ILendingPoolAddressesProvider addressesProvider,
-    IParaSwapAugustusRegistry augustusRegistry
+    IParaSwapAugustusRegistry augustusRegistry,
+    address _feeContract
   ) public BaseParaSwapSellAdapter(addressesProvider, augustusRegistry) {
     // This is only required to initialize BaseParaSwapSellAdapter
+    feeContract = IFeeContract(_feeContract);
   }
 
   /**
@@ -45,7 +50,7 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
     uint256[] calldata premiums,
     address initiator,
     bytes calldata params
-  ) external override nonReentrant returns (bool) {
+  ) external payable override nonReentrant returns (bool) {
     require(msg.sender == address(LENDING_POOL), 'CALLER_MUST_BE_LENDING_POOL');
     require(
       assets.length == 1 && amounts.length == 1 && premiums.length == 1,
@@ -63,14 +68,10 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
       bytes memory swapCalldata,
       IParaSwapAugustus augustus,
       PermitSignature memory permitParams
-    ) = abi.decode(params, (
-      IERC20Detailed,
-      uint256,
-      uint256,
-      bytes,
-      IParaSwapAugustus,
-      PermitSignature
-    ));
+    ) = abi.decode(
+        params,
+        (IERC20Detailed, uint256, uint256, bytes, IParaSwapAugustus, PermitSignature)
+      );
 
     _swapLiquidity(
       swapAllBalanceOffset,
@@ -110,9 +111,10 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
     bytes calldata swapCalldata,
     IParaSwapAugustus augustus,
     PermitSignature calldata permitParams
-  ) external nonReentrant {
-    IERC20WithPermit aToken =
-      IERC20WithPermit(_getReserveData(address(assetToSwapFrom)).aTokenAddress);
+  ) external payable nonReentrant {
+    IERC20WithPermit aToken = IERC20WithPermit(
+      _getReserveData(address(assetToSwapFrom)).aTokenAddress
+    );
 
     if (swapAllBalanceOffset != 0) {
       uint256 balance = aToken.balanceOf(msg.sender);
@@ -140,7 +142,7 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
 
     assetToSwapTo.safeApprove(address(LENDING_POOL), 0);
     assetToSwapTo.safeApprove(address(LENDING_POOL), amountReceived);
-    LENDING_POOL.deposit(address(assetToSwapTo), amountReceived, msg.sender, 0);
+    LENDING_POOL.deposit{value: msg.value}(address(assetToSwapTo), amountReceived, msg.sender, 0);
   }
 
   /**
@@ -156,7 +158,7 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
    * @param assetToSwapTo Address of the underlying asset to be swapped to and deposited
    * @param minAmountToReceive Min amount to be received from the swap
    */
-  function _swapLiquidity (
+  function _swapLiquidity(
     uint256 swapAllBalanceOffset,
     bytes memory swapCalldata,
     IParaSwapAugustus augustus,
@@ -168,8 +170,9 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
     IERC20Detailed assetToSwapTo,
     uint256 minAmountToReceive
   ) internal {
-    IERC20WithPermit aToken =
-      IERC20WithPermit(_getReserveData(address(assetToSwapFrom)).aTokenAddress);
+    IERC20WithPermit aToken = IERC20WithPermit(
+      _getReserveData(address(assetToSwapFrom)).aTokenAddress
+    );
     uint256 amountToSwap = flashLoanAmount;
 
     uint256 balance = aToken.balanceOf(initiator);
@@ -193,7 +196,7 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
 
     assetToSwapTo.safeApprove(address(LENDING_POOL), 0);
     assetToSwapTo.safeApprove(address(LENDING_POOL), amountReceived);
-    LENDING_POOL.deposit(address(assetToSwapTo), amountReceived, initiator, 0);
+    LENDING_POOL.deposit{value: msg.value}(address(assetToSwapTo), amountReceived, initiator, 0);
 
     _pullATokenAndWithdraw(
       address(assetToSwapFrom),

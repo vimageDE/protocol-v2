@@ -55,6 +55,7 @@ import {
   UiPoolDataProviderV2V3Factory,
   UiIncentiveDataProviderV2V3,
   UiIncentiveDataProviderV2Factory,
+  MockFeeContractFactory,
 } from '../types';
 import {
   withSaveAndVerify,
@@ -72,6 +73,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { LendingPoolLibraryAddresses } from '../types/LendingPoolFactory';
 import { UiPoolDataProvider } from '../types';
 import { eNetwork } from './types';
+import { H1NativeApplication_Fee } from './h1';
 
 export const deployUiIncentiveDataProviderV2 = async (verify?: boolean) =>
   withSaveAndVerify(
@@ -248,8 +250,13 @@ export const deployAaveLibraries = async (
 
 export const deployLendingPool = async (verify?: boolean) => {
   const libraries = await deployAaveLibraries(verify);
+  const feeContract = await new MockFeeContractFactory(await getFirstSigner()).deploy(
+    H1NativeApplication_Fee
+  );
   const lendingPoolImpl = await new LendingPoolFactory(libraries, await getFirstSigner()).deploy();
+
   await insertContractAddressInDb(eContractid.LendingPoolImpl, lendingPoolImpl.address);
+  await insertContractAddressInDb(eContractid.MockFeeContract, feeContract.address);
   return withSaveAndVerify(lendingPoolImpl, eContractid.LendingPool, [], verify);
 };
 
@@ -564,7 +571,10 @@ export const deployATokensAndRatesHelper = async (
     verify
   );
 
-export const deployWETHGateway = async (args: [tEthereumAddress], verify?: boolean) =>
+export const deployWETHGateway = async (
+  args: [tEthereumAddress, tEthereumAddress],
+  verify?: boolean
+) =>
   withSaveAndVerify(
     await new WETHGatewayFactory(await getFirstSigner()).deploy(...args),
     eContractid.WETHGateway,
@@ -782,7 +792,7 @@ export const deployMockParaSwapAugustusRegistry = async (
   );
 
 export const deployParaSwapLiquiditySwapAdapter = async (
-  args: [tEthereumAddress, tEthereumAddress],
+  args: [tEthereumAddress, tEthereumAddress, tEthereumAddress],
   verify?: boolean
 ) =>
   withSaveAndVerify(

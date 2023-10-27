@@ -32,7 +32,7 @@ interface ILendingPoolAddressesProvider {
 
   function getLendingPool() external view returns (address);
 
-  function setLendingPoolImpl(address pool) external;
+  function setLendingPoolImpl(address pool, address feeContract) external;
 
   function getLendingPoolConfigurator() external view returns (address);
 

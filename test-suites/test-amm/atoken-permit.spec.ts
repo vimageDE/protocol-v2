@@ -7,6 +7,7 @@ import { makeSuite, TestEnv } from './helpers/make-suite';
 import { DRE } from '../../helpers/misc-utils';
 import { waitForTx } from '../../helpers/misc-utils';
 import { _TypedDataEncoder } from 'ethers/lib/utils';
+import { H1NativeApplication_Fee } from '../../helpers/h1';
 
 const { parseEther } = ethers.utils;
 
@@ -29,10 +30,15 @@ makeSuite('AToken: Permit', (testEnv: TestEnv) => {
   it('Get aDAI for tests', async () => {
     const { dai, pool, deployer } = testEnv;
 
+    const feeContractAddress = await pool._feeContract();
+    console.log('- should be feeContract.address: ', feeContractAddress);
+
     await dai.mint(parseEther('20000'));
     await dai.approve(pool.address, parseEther('20000'));
 
-    await pool.deposit(dai.address, parseEther('20000'), deployer.address, 0);
+    await pool.deposit(dai.address, parseEther('20000'), deployer.address, 0, {
+      value: H1NativeApplication_Fee,
+    });
   });
 
   it('Reverts submitting a permit with 0 expiration', async () => {

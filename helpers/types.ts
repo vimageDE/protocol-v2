@@ -51,6 +51,7 @@ export enum AavePools {
 }
 
 export enum eContractid {
+  MockFeeContract = 'MockFeeContract',
   Example = 'Example',
   LendingPoolAddressesProvider = 'LendingPoolAddressesProvider',
   MintableERC20 = 'MintableERC20',

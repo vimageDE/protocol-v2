@@ -157,7 +157,8 @@
             "amount": "-1",
             "user": "1",
             "onBehalfOf": "1",
-            "borrowRateMode": "variable"
+            "borrowRateMode": "variable",
+            "value": "0.001"
           },
           "expected": "success"
         }

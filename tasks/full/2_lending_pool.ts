@@ -13,6 +13,7 @@ import {
   getLendingPoolAddressesProvider,
   getLendingPool,
   getLendingPoolConfiguratorProxy,
+  getFeeContract,
 } from '../../helpers/contracts-getters';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import {
@@ -36,15 +37,19 @@ task('full:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
 
       // Reuse/deploy lending pool implementation
       let lendingPoolImplAddress = getParamPerNetwork(LendingPool, network);
+      const feeContract = await getFeeContract();
+
       if (!notFalsyOrZeroAddress(lendingPoolImplAddress)) {
         console.log('\tDeploying new lending pool implementation & libraries...');
         const lendingPoolImpl = await deployLendingPool(verify);
         lendingPoolImplAddress = lendingPoolImpl.address;
-        await lendingPoolImpl.initialize(addressesProvider.address);
+        await lendingPoolImpl.initialize(addressesProvider.address, feeContract.address);
       }
       console.log('\tSetting lending pool implementation with address:', lendingPoolImplAddress);
       // Set lending pool impl to Address provider
-      await waitForTx(await addressesProvider.setLendingPoolImpl(lendingPoolImplAddress));
+      await waitForTx(
+        await addressesProvider.setLendingPoolImpl(lendingPoolImplAddress, feeContract.address)
+      );
 
       const address = await addressesProvider.getLendingPool();
       const lendingPoolProxy = await getLendingPool(address);

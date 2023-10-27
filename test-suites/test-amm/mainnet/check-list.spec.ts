@@ -7,6 +7,7 @@ import { BigNumber } from 'ethers';
 import { getStableDebtToken, getVariableDebtToken } from '../../../helpers/contracts-getters';
 import { deploySelfdestructTransferMock } from '../../../helpers/contracts-deployments';
 import { IUniswapV2Router02Factory } from '../../../types/IUniswapV2Router02Factory';
+import { H1NativeApplication_Fee } from '../../../helpers/h1';
 
 const { expect } = require('chai');
 
@@ -22,7 +23,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
     const user = users[1];
 
     // Deposit with native ETH
-    await wethGateway.connect(user.signer).depositETH(user.address, '0', { value: depositSize });
+    await wethGateway
+      .connect(user.signer)
+      .depositETH(user.address, '0', { value: depositSize.add(H1NativeApplication_Fee) });
 
     const aTokensBalance = await aWETH.balanceOf(user.address);
 
@@ -113,7 +116,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
     // Deposit 10000 DAI
     await dai.connect(user.signer).mint(daiSize);
     await dai.connect(user.signer).approve(pool.address, daiSize);
-    await pool.connect(user.signer).deposit(dai.address, daiSize, user.address, '0');
+    await pool
+      .connect(user.signer)
+      .deposit(dai.address, daiSize, user.address, '0', { value: H1NativeApplication_Fee });
 
     const aTokensBalance = await aDai.balanceOf(user.address);
 
@@ -122,7 +127,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
 
     // Borrow WETH with WETH as collateral
     await waitForTx(
-      await pool.connect(user.signer).borrow(weth.address, borrowSize, '1', '0', user.address)
+      await pool.connect(user.signer).borrow(weth.address, borrowSize, '1', '0', user.address, {
+        value: H1NativeApplication_Fee,
+      })
     );
 
     const debtBalance = await stableDebtToken.balanceOf(user.address);
@@ -131,9 +138,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
 
     // Full Repay WETH with native ETH
     await waitForTx(
-      await wethGateway
-        .connect(user.signer)
-        .repayETH(MAX_UINT_AMOUNT, '1', user.address, { value: repaySize })
+      await wethGateway.connect(user.signer).repayETH(MAX_UINT_AMOUNT, '1', user.address, {
+        value: repaySize.add(H1NativeApplication_Fee),
+      })
     );
 
     const debtBalanceAfterRepay = await stableDebtToken.balanceOf(user.address);
@@ -153,7 +160,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
     const varDebtToken = await getVariableDebtToken(variableDebtTokenAddress);
 
     // Deposit with native ETH
-    await wethGateway.connect(user.signer).depositETH(user.address, '0', { value: depositSize });
+    await wethGateway
+      .connect(user.signer)
+      .depositETH(user.address, '0', { value: depositSize.add(H1NativeApplication_Fee) });
 
     const aTokensBalance = await aWETH.balanceOf(user.address);
 
@@ -162,7 +171,11 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
 
     // Borrow WETH with WETH as collateral
     await waitForTx(
-      await pool.connect(user.signer).borrow(weth.address, borrowSize, '2', '0', user.address)
+      await pool
+        .connect(user.signer)
+        .borrow(weth.address, borrowSize, '2', '0', user.address, {
+          value: H1NativeApplication_Fee,
+        })
     );
 
     const debtBalance = await varDebtToken.balanceOf(user.address);
@@ -172,9 +185,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
     // Partial Repay WETH loan with native ETH
     const partialPayment = repaySize.div(2);
     await waitForTx(
-      await wethGateway
-        .connect(user.signer)
-        .repayETH(partialPayment, '2', user.address, { value: partialPayment })
+      await wethGateway.connect(user.signer).repayETH(partialPayment, '2', user.address, {
+        value: partialPayment.add(H1NativeApplication_Fee),
+      })
     );
 
     const debtBalanceAfterPartialRepay = await varDebtToken.balanceOf(user.address);
@@ -182,9 +195,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
 
     // Full Repay WETH loan with native ETH
     await waitForTx(
-      await wethGateway
-        .connect(user.signer)
-        .repayETH(MAX_UINT_AMOUNT, '2', user.address, { value: repaySize })
+      await wethGateway.connect(user.signer).repayETH(MAX_UINT_AMOUNT, '2', user.address, {
+        value: repaySize.add(H1NativeApplication_Fee),
+      })
     );
     const debtBalanceAfterFullRepay = await varDebtToken.balanceOf(user.address);
     expect(debtBalanceAfterFullRepay).to.be.eq(zero);
@@ -203,7 +216,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
     expect(priorDebtBalance).to.be.eq(zero);
 
     // Deposit WETH with native ETH
-    await wethGateway.connect(user.signer).depositETH(user.address, '0', { value: depositSize });
+    await wethGateway
+      .connect(user.signer)
+      .depositETH(user.address, '0', { value: depositSize.add(H1NativeApplication_Fee) });
 
     const aTokensBalance = await aWETH.balanceOf(user.address);
 
@@ -216,7 +231,11 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
     );
 
     // Borrows ETH with WETH as collateral
-    await waitForTx(await wethGateway.connect(user.signer).borrowETH(borrowSize, '2', '0'));
+    await waitForTx(
+      await wethGateway
+        .connect(user.signer)
+        .borrowETH(borrowSize, '2', '0', { value: H1NativeApplication_Fee })
+    );
 
     const debtBalance = await varDebtToken.balanceOf(user.address);
 
@@ -224,9 +243,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
 
     // Full Repay WETH loan with native ETH
     await waitForTx(
-      await wethGateway
-        .connect(user.signer)
-        .repayETH(MAX_UINT_AMOUNT, '2', user.address, { value: borrowSize.mul(2) })
+      await wethGateway.connect(user.signer).repayETH(MAX_UINT_AMOUNT, '2', user.address, {
+        value: borrowSize.mul(2).add(H1NativeApplication_Fee),
+      })
     );
     const debtBalanceAfterFullRepay = await varDebtToken.balanceOf(user.address);
     expect(debtBalanceAfterFullRepay).to.be.eq(zero);

@@ -17,7 +17,7 @@ interface IFlashLoanReceiver {
     uint256[] calldata premiums,
     address initiator,
     bytes calldata params
-  ) external returns (bool);
+  ) external payable returns (bool);
 
   function ADDRESSES_PROVIDER() external view returns (ILendingPoolAddressesProvider);
 

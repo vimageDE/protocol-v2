@@ -33,6 +33,7 @@ import { ReserveData, UserReserveData } from './utils/interfaces';
 import { ContractReceipt } from 'ethers';
 import { AToken } from '../../../types/AToken';
 import { RateMode, tEthereumAddress } from '../../../helpers/types';
+import { H1NativeApplication_Fee } from '../../../helpers/h1';
 
 const { expect } = chai;
 
@@ -149,7 +150,7 @@ export const deposit = async (
 
   const amountToDeposit = await convertToCurrencyDecimals(reserve, amount);
 
-  const txOptions: any = {};
+  const txOptions: any = { value: H1NativeApplication_Fee };
 
   const { reserveData: reserveDataBefore, userData: userDataBefore } = await getContractsData(
     reserve,
@@ -159,7 +160,9 @@ export const deposit = async (
   );
 
   if (sendValue) {
-    txOptions.value = await convertToCurrencyDecimals(reserve, sendValue);
+    txOptions.value = (await convertToCurrencyDecimals(reserve, sendValue)).add(
+      H1NativeApplication_Fee
+    );
   }
 
   if (expectedResult === 'success') {
@@ -349,12 +352,14 @@ export const borrow = async (
   );
 
   const amountToBorrow = await convertToCurrencyDecimals(reserve, amount);
-  
+
   if (expectedResult === 'success') {
     const txResult = await waitForTx(
       await pool
         .connect(user.signer)
-        .borrow(reserve, amountToBorrow, interestRateMode, '0', onBehalfOf)
+        .borrow(reserve, amountToBorrow, interestRateMode, '0', onBehalfOf, {
+          value: H1NativeApplication_Fee,
+        })
     );
 
     const { txCost, txTimestamp } = await getTxCostAndTimestamp(txResult);
@@ -415,7 +420,9 @@ export const borrow = async (
     // });
   } else if (expectedResult === 'revert') {
     await expect(
-      pool.connect(user.signer).borrow(reserve, amountToBorrow, interestRateMode, '0', onBehalfOf),
+      pool.connect(user.signer).borrow(reserve, amountToBorrow, interestRateMode, '0', onBehalfOf, {
+        value: H1NativeApplication_Fee,
+      }),
       revertMessage
     ).to.be.reverted;
   }

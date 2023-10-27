@@ -67,7 +67,7 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
     uint256[] calldata premiums,
     address initiator,
     bytes calldata params
-  ) external override returns (bool) {
+  ) external payable override returns (bool) {
     require(msg.sender == address(LENDING_POOL), 'CALLER_MUST_BE_LENDING_POOL');
 
     LiquidationParams memory decodedParams = _decodeParams(params);
@@ -123,7 +123,13 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
     IERC20(borrowedAsset).approve(address(LENDING_POOL), debtToCover);
 
     // Liquidate the user position and release the underlying collateral
-    LENDING_POOL.liquidationCall(collateralAsset, borrowedAsset, user, debtToCover, false);
+    LENDING_POOL.liquidationCall{value: msg.value}(
+      collateralAsset,
+      borrowedAsset,
+      user,
+      debtToCover,
+      false
+    );
 
     // Discover the liquidated tokens
     uint256 collateralBalanceAfter = IERC20(collateralAsset).balanceOf(address(this));

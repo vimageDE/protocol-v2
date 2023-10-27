@@ -60,7 +60,7 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
     uint256[] calldata premiums,
     address initiator,
     bytes calldata params
-  ) external override returns (bool) {
+  ) external payable override returns (bool) {
     require(msg.sender == address(LENDING_POOL), 'CALLER_MUST_BE_LENDING_POOL');
 
     SwapParams memory decodedParams = _decodeParams(params);
@@ -228,7 +228,7 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
     // Deposit new reserve
     IERC20(assetTo).safeApprove(address(LENDING_POOL), 0);
     IERC20(assetTo).safeApprove(address(LENDING_POOL), vars.receivedAmount);
-    LENDING_POOL.deposit(assetTo, vars.receivedAmount, initiator, 0);
+    LENDING_POOL.deposit{value: msg.value}(assetTo, vars.receivedAmount, initiator, 0);
 
     vars.flashLoanDebt = amount.add(premium);
     vars.amountToPull = vars.amountToSwap.add(premium);
@@ -265,8 +265,7 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
       bytes32[] memory r,
       bytes32[] memory s,
       bool[] memory useEthPath
-    ) =
-      abi.decode(
+    ) = abi.decode(
         params,
         (address[], uint256[], bool[], uint256[], uint256[], uint8[], bytes32[], bytes32[], bool[])
       );

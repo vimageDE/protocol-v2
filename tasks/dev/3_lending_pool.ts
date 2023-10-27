@@ -12,6 +12,7 @@ import {
   getLendingPoolAddressesProvider,
   getLendingPool,
   getLendingPoolConfiguratorProxy,
+  getFeeContract,
 } from '../../helpers/contracts-getters';
 import { insertContractAddressInDb } from '../../helpers/contracts-helpers';
 import { ConfigNames, loadPoolConfig } from '../../helpers/configuration';
@@ -26,8 +27,12 @@ task('dev:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
 
     const lendingPoolImpl = await deployLendingPool(verify);
 
+    const feeContract = await getFeeContract();
+
     // Set lending pool impl to Address Provider
-    await waitForTx(await addressesProvider.setLendingPoolImpl(lendingPoolImpl.address));
+    await waitForTx(
+      await addressesProvider.setLendingPoolImpl(lendingPoolImpl.address, feeContract.address)
+    );
     const address = await addressesProvider.getLendingPool();
     const lendingPoolProxy = await getLendingPool(address);
     await insertContractAddressInDb(eContractid.LendingPool, lendingPoolProxy.address);

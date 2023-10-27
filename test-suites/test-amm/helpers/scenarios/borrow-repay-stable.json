@@ -146,7 +146,8 @@
             "amount": "50",
             "user": "1",
             "onBehalfOf": "1",
-            "borrowRateMode": "stable"
+            "borrowRateMode": "stable",
+            "value": "0.001"
           },
           "expected": "revert"
         }
@@ -162,7 +163,8 @@
             "amount": "50",
             "user": "1",
             "onBehalfOf": "1",
-            "borrowRateMode": "variable"
+            "borrowRateMode": "variable",
+            "value": "0.001"
           },
           "expected": "success"
         }
@@ -196,7 +198,8 @@
             "amount": "-1",
             "user": "1",
             "onBehalfOf": "1",
-            "borrowRateMode": "stable"
+            "borrowRateMode": "stable",
+            "value": "0.001"
           },
           "expected": "revert"
         }
@@ -212,7 +215,8 @@
             "amount": "-1",
             "user": "1",
             "onBehalfOf": "1",
-            "borrowRateMode": "variable"
+            "borrowRateMode": "variable",
+            "value": "0.001"
           },
           "expected": "success"
         }
@@ -485,7 +489,8 @@
             "amount": "-1",
             "user": "1",
             "onBehalfOf": "1",
-            "borrowRateMode": "stable"
+            "borrowRateMode": "stable",
+            "value": "0.001"
           },
           "expected": "revert"
         },
@@ -514,7 +519,8 @@
             "amount": "-1",
             "user": "2",
             "onBehalfOf": "2",
-            "borrowRateMode": "stable"
+            "borrowRateMode": "stable",
+            "value": "0.001"
           },
           "expected": "revert"
         },
@@ -543,7 +549,8 @@
             "amount": "-1",
             "user": "3",
             "onBehalfOf": "3",
-            "borrowRateMode": "stable"
+            "borrowRateMode": "stable",
+            "value": "0.001"
           },
           "expected": "revert"
         },
@@ -572,7 +579,8 @@
             "amount": "-1",
             "user": "4",
             "onBehalfOf": "4",
-            "borrowRateMode": "stable"
+            "borrowRateMode": "stable",
+            "value": "0.001"
           },
           "expected": "revert"
         },
@@ -700,7 +708,8 @@
             "amount": "-1",
             "user": "1",
             "onBehalfOf": "1",
-            "borrowRateMode": "stable"
+            "borrowRateMode": "stable",
+            "value": "0.001"
           },
           "expected": "revert"
         },
@@ -711,7 +720,8 @@
             "amount": "-1",
             "user": "1",
             "onBehalfOf": "1",
-            "borrowRateMode": "variable"
+            "borrowRateMode": "variable",
+            "value": "0.001"
           },
           "expected": "success"
         },

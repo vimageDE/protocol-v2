@@ -57,11 +57,10 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
    * @param id The id
    * @param implementationAddress The address of the new implementation
    */
-  function setAddressAsProxy(bytes32 id, address implementationAddress)
-    external
-    override
-    onlyOwner
-  {
+  function setAddressAsProxy(
+    bytes32 id,
+    address implementationAddress
+  ) external override onlyOwner {
     _updateImpl(id, implementationAddress);
     emit AddressSet(id, implementationAddress, true);
   }
@@ -98,8 +97,8 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
    * setting the new `pool` implementation on the first time calling it
    * @param pool The new LendingPool implementation
    **/
-  function setLendingPoolImpl(address pool) external override onlyOwner {
-    _updateImpl(LENDING_POOL, pool);
+  function setLendingPoolImpl(address pool, address feeContract) external override onlyOwner {
+    _updateLendingPoolImpl(LENDING_POOL, pool, feeContract);
     emit LendingPoolUpdated(pool);
   }
 
@@ -194,9 +193,32 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
   function _updateImpl(bytes32 id, address newAddress) internal {
     address payable proxyAddress = payable(_addresses[id]);
 
-    InitializableImmutableAdminUpgradeabilityProxy proxy =
-      InitializableImmutableAdminUpgradeabilityProxy(proxyAddress);
+    InitializableImmutableAdminUpgradeabilityProxy proxy = InitializableImmutableAdminUpgradeabilityProxy(
+        proxyAddress
+      );
     bytes memory params = abi.encodeWithSignature('initialize(address)', address(this));
+
+    if (proxyAddress == address(0)) {
+      proxy = new InitializableImmutableAdminUpgradeabilityProxy(address(this));
+      proxy.initialize(newAddress, params);
+      _addresses[id] = address(proxy);
+      emit ProxyCreated(id, address(proxy));
+    } else {
+      proxy.upgradeToAndCall(newAddress, params);
+    }
+  }
+
+  function _updateLendingPoolImpl(bytes32 id, address newAddress, address feeContract) internal {
+    address payable proxyAddress = payable(_addresses[id]);
+
+    InitializableImmutableAdminUpgradeabilityProxy proxy = InitializableImmutableAdminUpgradeabilityProxy(
+        proxyAddress
+      );
+    bytes memory params = abi.encodeWithSignature(
+      'initialize(address,address)',
+      address(this),
+      feeContract
+    );
 
     if (proxyAddress == address(0)) {
       proxy = new InitializableImmutableAdminUpgradeabilityProxy(address(this));

@@ -12,19 +12,22 @@ import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveC
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {Helpers} from '../protocol/libraries/helpers/Helpers.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
+import '../h1/IFeeContract.sol';
 
 contract WETHGateway is IWETHGateway, Ownable {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
   IWETH internal immutable WETH;
+  IFeeContract private feeContract;
 
   /**
    * @dev Sets the WETH address and the LendingPoolAddressesProvider address. Infinite approves lending pool.
    * @param weth Address of the Wrapped Ether contract
    **/
-  constructor(address weth) public {
+  constructor(address weth, address _feeContract) public {
     WETH = IWETH(weth);
+    feeContract = IFeeContract(_feeContract);
   }
 
   function authorizeLendingPool(address lendingPool) external onlyOwner {
@@ -43,8 +46,16 @@ contract WETHGateway is IWETHGateway, Ownable {
     address onBehalfOf,
     uint16 referralCode
   ) external payable override {
-    WETH.deposit{value: msg.value}();
-    ILendingPool(lendingPool).deposit(address(WETH), msg.value, onBehalfOf, referralCode);
+    uint256 fee = feeContract.queryOracle();
+    require(msg.value > fee, 'insufficient eth amount');
+    uint256 depositAmount = msg.value - fee;
+    WETH.deposit{value: depositAmount}();
+    ILendingPool(lendingPool).deposit{value: fee}(
+      address(WETH),
+      msg.value,
+      onBehalfOf,
+      referralCode
+    );
   }
 
   /**
@@ -53,11 +64,7 @@ contract WETHGateway is IWETHGateway, Ownable {
    * @param amount amount of aWETH to withdraw and receive native ETH
    * @param to address of the user who will receive native ETH
    */
-  function withdrawETH(
-    address lendingPool,
-    uint256 amount,
-    address to
-  ) external override {
+  function withdrawETH(address lendingPool, uint256 amount, address to) external override {
     IAToken aWETH = IAToken(ILendingPool(lendingPool).getReserveData(address(WETH)).aTokenAddress);
     uint256 userBalance = aWETH.balanceOf(msg.sender);
     uint256 amountToWithdraw = amount;
@@ -85,23 +92,25 @@ contract WETHGateway is IWETHGateway, Ownable {
     uint256 rateMode,
     address onBehalfOf
   ) external payable override {
-    (uint256 stableDebt, uint256 variableDebt) =
-      Helpers.getUserCurrentDebtMemory(
-        onBehalfOf,
-        ILendingPool(lendingPool).getReserveData(address(WETH))
-      );
+    (uint256 stableDebt, uint256 variableDebt) = Helpers.getUserCurrentDebtMemory(
+      onBehalfOf,
+      ILendingPool(lendingPool).getReserveData(address(WETH))
+    );
 
-    uint256 paybackAmount =
-      DataTypes.InterestRateMode(rateMode) == DataTypes.InterestRateMode.STABLE
-        ? stableDebt
-        : variableDebt;
+    uint256 paybackAmount = DataTypes.InterestRateMode(rateMode) ==
+      DataTypes.InterestRateMode.STABLE
+      ? stableDebt
+      : variableDebt;
 
     if (amount < paybackAmount) {
       paybackAmount = amount;
     }
-    require(msg.value >= paybackAmount, 'msg.value is less than repayment amount');
+    uint256 fee = feeContract.queryOracle();
+    require(msg.value > fee, 'insufficient eth amount');
+    uint256 repayAmount = msg.value - fee;
+    require(repayAmount >= paybackAmount, 'msg.value is less than repayment amount');
     WETH.deposit{value: paybackAmount}();
-    ILendingPool(lendingPool).repay(address(WETH), msg.value, rateMode, onBehalfOf);
+    ILendingPool(lendingPool).repay{value: fee}(address(WETH), msg.value, rateMode, onBehalfOf);
 
     // refund remaining dust eth
     if (msg.value > paybackAmount) _safeTransferETH(msg.sender, msg.value - paybackAmount);
@@ -119,8 +128,8 @@ contract WETHGateway is IWETHGateway, Ownable {
     uint256 amount,
     uint256 interesRateMode,
     uint16 referralCode
-  ) external override {
-    ILendingPool(lendingPool).borrow(
+  ) external payable override {
+    ILendingPool(lendingPool).borrow{value: msg.value}(
       address(WETH),
       amount,
       interesRateMode,
@@ -148,11 +157,7 @@ contract WETHGateway is IWETHGateway, Ownable {
    * @param to recipient of the transfer
    * @param amount amount to send
    */
-  function emergencyTokenTransfer(
-    address token,
-    address to,
-    uint256 amount
-  ) external onlyOwner {
+  function emergencyTokenTransfer(address token, address to, uint256 amount) external onlyOwner {
     IERC20(token).transfer(to, amount);
   }
 

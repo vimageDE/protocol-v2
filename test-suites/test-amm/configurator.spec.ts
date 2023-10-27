@@ -3,6 +3,7 @@ import { APPROVAL_AMOUNT_LENDING_POOL, RAY } from '../../helpers/constants';
 import { convertToCurrencyDecimals } from '../../helpers/contracts-helpers';
 import { ProtocolErrors } from '../../helpers/types';
 import { strategyWETH } from '../../markets/amm/reservesConfigs';
+import { H1NativeApplication_Fee } from '../../helpers/h1';
 
 const { expect } = require('chai');
 
@@ -178,7 +179,7 @@ makeSuite('LendingPoolConfigurator', (testEnv: TestEnv) => {
     expect(ltv).to.be.equal(strategyWETH.baseLTVAsCollateral);
     expect(liquidationThreshold).to.be.equal(strategyWETH.liquidationThreshold);
     expect(liquidationBonus).to.be.equal(strategyWETH.liquidationBonus);
-    expect(stableBorrowRateEnabled).to.be.equal(true/*strategyWETH.stableBorrowRateEnabled*/);
+    expect(stableBorrowRateEnabled).to.be.equal(true /*strategyWETH.stableBorrowRateEnabled*/);
     expect(reserveFactor).to.be.equal(strategyWETH.reserveFactor);
 
     expect(variableBorrowIndex.toString()).to.be.equal(RAY);
@@ -250,7 +251,7 @@ makeSuite('LendingPoolConfigurator', (testEnv: TestEnv) => {
     expect(ltv).to.be.equal(strategyWETH.baseLTVAsCollateral);
     expect(liquidationThreshold).to.be.equal(strategyWETH.liquidationThreshold);
     expect(liquidationBonus).to.be.equal(strategyWETH.liquidationBonus);
-    expect(stableBorrowRateEnabled).to.be.equal(true/*strategyWETH.stableBorrowRateEnabled*/);
+    expect(stableBorrowRateEnabled).to.be.equal(true /*strategyWETH.stableBorrowRateEnabled*/);
     expect(reserveFactor).to.be.equal(strategyWETH.reserveFactor);
   });
 
@@ -402,7 +403,9 @@ makeSuite('LendingPoolConfigurator', (testEnv: TestEnv) => {
     const amountDAItoDeposit = await convertToCurrencyDecimals(dai.address, '1000');
 
     //user 1 deposits 1000 DAI
-    await pool.deposit(dai.address, amountDAItoDeposit, userAddress, '0');
+    await pool.deposit(dai.address, amountDAItoDeposit, userAddress, '0', {
+      value: H1NativeApplication_Fee,
+    });
 
     await expect(
       configurator.deactivateReserve(dai.address),

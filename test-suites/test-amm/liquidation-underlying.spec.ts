@@ -10,6 +10,7 @@ import { getReserveData, getUserData } from './helpers/utils/helpers';
 import { CommonsConfig } from '../../markets/amm/commons';
 
 import { parseEther } from 'ethers/lib/utils';
+import { H1NativeApplication_Fee } from '../../helpers/h1';
 
 const chai = require('chai');
 
@@ -32,7 +33,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
     await configurator.deactivateReserve(weth.address);
 
     await expect(
-      pool.liquidationCall(weth.address, dai.address, user.address, parseEther('1000'), false)
+      pool.liquidationCall(weth.address, dai.address, user.address, parseEther('1000'), false, {
+        value: H1NativeApplication_Fee,
+      })
     ).to.be.revertedWith('2');
 
     await configurator.activateReserve(weth.address);
@@ -40,7 +43,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
     await configurator.deactivateReserve(dai.address);
 
     await expect(
-      pool.liquidationCall(weth.address, dai.address, user.address, parseEther('1000'), false)
+      pool.liquidationCall(weth.address, dai.address, user.address, parseEther('1000'), false, {
+        value: H1NativeApplication_Fee,
+      })
     ).to.be.revertedWith('2');
 
     await configurator.activateReserve(dai.address);
@@ -62,7 +67,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     await pool
       .connect(depositor.signer)
-      .deposit(dai.address, amountDAItoDeposit, depositor.address, '0');
+      .deposit(dai.address, amountDAItoDeposit, depositor.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
     //user 2 deposits 1 ETH
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
@@ -74,7 +81,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     await pool
       .connect(borrower.signer)
-      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
+      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
 
     //user 2 borrows
 
@@ -91,7 +100,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     await pool
       .connect(borrower.signer)
-      .borrow(dai.address, amountDAIToBorrow, RateMode.Variable, '0', borrower.address);
+      .borrow(dai.address, amountDAIToBorrow, RateMode.Variable, '0', borrower.address, {
+        value: H1NativeApplication_Fee,
+      });
 
     const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
 
@@ -148,7 +159,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     const tx = await pool
       .connect(liquidator.signer)
-      .liquidationCall(weth.address, dai.address, borrower.address, amountToLiquidate, false);
+      .liquidationCall(weth.address, dai.address, borrower.address, amountToLiquidate, false, {
+        value: H1NativeApplication_Fee,
+      });
 
     const userReserveDataAfter = await getUserData(
       pool,
@@ -186,7 +199,7 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
     const txTimestamp = new BigNumber(
       (await DRE.ethers.provider.getBlock(tx.blockNumber)).timestamp
     );
-    const reserve = await getReserveData
+    const reserve = await getReserveData;
     const variableDebtBeforeTx = calcExpectedVariableDebtTokenBalance(
       daiReserveBefore,
       userReserveDataBefore,
@@ -245,7 +258,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     await pool
       .connect(depositor.signer)
-      .deposit(usdc.address, amountUSDCtoDeposit, depositor.address, '0');
+      .deposit(usdc.address, amountUSDCtoDeposit, depositor.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
 
     //borrower deposits 1 ETH
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
@@ -258,7 +273,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     await pool
       .connect(borrower.signer)
-      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
+      .deposit(weth.address, amountETHtoDeposit, borrower.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
 
     //borrower borrows
     const userGlobalData = await pool.getUserAccountData(borrower.address);
@@ -275,7 +292,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     await pool
       .connect(borrower.signer)
-      .borrow(usdc.address, amountUSDCToBorrow, RateMode.Variable, '0', borrower.address);
+      .borrow(usdc.address, amountUSDCToBorrow, RateMode.Variable, '0', borrower.address, {
+        value: H1NativeApplication_Fee,
+      });
 
     //drops HF below 1
     await oracle.setAssetPrice(
@@ -308,7 +327,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     await pool
       .connect(liquidator.signer)
-      .liquidationCall(weth.address, usdc.address, borrower.address, amountToLiquidate, false);
+      .liquidationCall(weth.address, usdc.address, borrower.address, amountToLiquidate, false, {
+        value: H1NativeApplication_Fee,
+      });
 
     const userReserveDataAfter = await helpersContract.getUserReserveData(
       usdc.address,
@@ -396,7 +417,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     await pool
       .connect(borrower.signer)
-      .deposit(aave.address, amountToDeposit, borrower.address, '0');
+      .deposit(aave.address, amountToDeposit, borrower.address, '0', {
+        value: H1NativeApplication_Fee,
+      });
     const usdcPrice = await oracle.getAssetPrice(usdc.address);
 
     //drops HF below 1
@@ -431,7 +454,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     await pool
       .connect(liquidator.signer)
-      .liquidationCall(aave.address, usdc.address, borrower.address, amountToLiquidate, false);
+      .liquidationCall(aave.address, usdc.address, borrower.address, amountToLiquidate, false, {
+        value: H1NativeApplication_Fee,
+      });
 
     const userReserveDataAfter = await helpersContract.getUserReserveData(
       usdc.address,
