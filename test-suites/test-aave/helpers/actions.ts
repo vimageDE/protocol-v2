@@ -457,11 +457,13 @@ export const repay = async (
   }
   amountToRepay = '0x' + new BigNumber(amountToRepay).toString(16);
 
-  const txOptions: any = {};
+  const txOptions: any = { value: H1NativeApplication_Fee };
 
   if (sendValue) {
     const valueToSend = await convertToCurrencyDecimals(reserve, sendValue);
-    txOptions.value = '0x' + new BigNumber(valueToSend.toString()).toString(16);
+    const fee = new BigNumber(H1NativeApplication_Fee.toString());
+    const totalValue = new BigNumber(valueToSend.toString()).plus(fee);
+    txOptions.value = '0x' + totalValue.toString(16);
   }
 
   if (expectedResult === 'success') {

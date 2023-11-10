@@ -681,7 +681,7 @@ makeSuite('ParaSwap adapters', (testEnv: TestEnv) => {
               userAddress,
               params,
               0,
-              { value: H1NativeApplication_Fee }
+              { value: H1NativeApplication_Fee.mul(2) }
             )
         )
           .to.emit(paraswapLiquiditySwapAdapter, 'Swapped')

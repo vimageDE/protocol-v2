@@ -87,7 +87,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
 
     // Full withdraw
     const { gasUsed: withdrawGas } = await waitForTx(
-      await wethGateway.connect(user.signer).withdrawETH(MAX_UINT_AMOUNT, user.address)
+      await wethGateway
+        .connect(user.signer)
+        .withdrawETH(pool.address, MAX_UINT_AMOUNT, user.address)
     );
 
     const afterFullEtherBalance = await user.signer.getBalance();
@@ -171,11 +173,9 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
 
     // Borrow WETH with WETH as collateral
     await waitForTx(
-      await pool
-        .connect(user.signer)
-        .borrow(weth.address, borrowSize, '2', '0', user.address, {
-          value: H1NativeApplication_Fee,
-        })
+      await pool.connect(user.signer).borrow(weth.address, borrowSize, '2', '0', user.address, {
+        value: H1NativeApplication_Fee,
+      })
     );
 
     const debtBalance = await varDebtToken.balanceOf(user.address);

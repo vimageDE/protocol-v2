@@ -127,7 +127,7 @@
             "amount": "0",
             "user": "1",
             "onBehalfOf": "1",
-            "value": "0.001"
+            "value": "1000000000000000"
           },
           "expected": "revert",
           "revertMessage": "Amount must be greater than 0"
@@ -153,7 +153,7 @@
             "user": "1",
             "onBehalfOf": "1",
             "borrowRateMode": "variable",
-            "value": "0.001"
+            "value": "1000000000000000"
           },
           "expected": "success"
         }
@@ -180,7 +180,7 @@
             "user": "1",
             "onBehalfOf": "1",
             "borrowRateMode": "variable",
-            "value": "0.001"
+            "value": "1000000000000000"
           },
           "expected": "success"
         }
@@ -325,7 +325,7 @@
             "user": "1",
             "onBehalfOf": "1",
             "borrowRateMode": "variable",
-            "value": "0.001"
+            "value": "1000000000000000"
           },
           "expected": "revert",
           "revertMessage": "Amount must be greater than 0"
@@ -343,7 +343,7 @@
             "user": "2",
             "borrowRateMode": "variable",
             "onBehalfOf": "1",
-            "value": "0.001"
+            "value": "1000000000000000"
           },
           "expected": "revert",
           "revertMessage": "To repay on behalf of an user an explicit amount to repay is needed"
@@ -378,7 +378,7 @@
             "user": "3",
             "borrowRateMode": "variable",
             "onBehalfOf": "1",
-            "value": "0.001"
+            "value": "1000000000000000"
           },
           "expected": "success"
         }
@@ -412,7 +412,7 @@
             "borrowRateMode": "variable",
             "user": "1",
             "onBehalfOf": "1",
-            "value": "0.001"
+            "value": "1000000000000000"
           },
           "expected": "success"
         }
@@ -591,7 +591,7 @@
             "user": "1",
             "onBehalfOf": "1",
             "borrowRateMode": "variable",
-            "value": "0.001"
+            "value": "1000000000000000"
           },
           "expected": "success"
         }
@@ -924,7 +924,7 @@
             "user": "6",
             "onBehalfOf": "6",
             "borrowRateMode": "stable",
-            "value": "0.001"
+            "value": "1000000000000000"
           },
           "expected": "success"
         },
@@ -936,7 +936,7 @@
             "user": "6",
             "onBehalfOf": "6",
             "borrowRateMode": "variable",
-            "value": "0.001"
+            "value": "1000000000000000"
           },
           "expected": "success"
         },

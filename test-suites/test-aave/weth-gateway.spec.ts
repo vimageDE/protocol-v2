@@ -129,7 +129,9 @@ makeSuite('Use native ETH at LendingPool via WETHGateway', (testEnv: TestEnv) =>
     // Deposit 10000 DAI
     await dai.connect(user.signer).mint(daiSize);
     await dai.connect(user.signer).approve(pool.address, daiSize);
-    await pool.connect(user.signer).deposit(dai.address, daiSize, user.address, '0');
+    await pool
+      .connect(user.signer)
+      .deposit(dai.address, daiSize, user.address, '0', { value: H1NativeApplication_Fee });
 
     const aTokensBalance = await aDai.balanceOf(user.address);
 

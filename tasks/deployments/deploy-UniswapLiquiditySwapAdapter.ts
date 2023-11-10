@@ -2,7 +2,7 @@ import { task } from 'hardhat/config';
 
 import { UniswapLiquiditySwapAdapterFactory } from '../../types';
 import { verifyContract } from '../../helpers/contracts-helpers';
-import { getFirstSigner } from '../../helpers/contracts-getters';
+import { getFirstSigner, getFeeContract } from '../../helpers/contracts-getters';
 import { eContractid } from '../../helpers/types';
 
 const CONTRACT_NAME = 'UniswapLiquiditySwapAdapter';
@@ -25,9 +25,10 @@ task(`deploy-${CONTRACT_NAME}`, `Deploys the ${CONTRACT_NAME} contract`)
       '0xfcd87315f0e4067070ade8682fcdbc3006631441', // uniswap router address
     ];
     */
+    const feeContract = await getFeeContract();
     const uniswapRepayAdapter = await new UniswapLiquiditySwapAdapterFactory(
       await getFirstSigner()
-    ).deploy(provider, router, weth);
+    ).deploy(provider, router, weth, feeContract.address);
     await uniswapRepayAdapter.deployTransaction.wait();
     console.log(`${CONTRACT_NAME}.address`, uniswapRepayAdapter.address);
 

@@ -6,7 +6,8 @@ import { ethers } from 'ethers';
 import { ZERO_ADDRESS } from '../../helpers/constants';
 import { waitForTx } from '../../helpers/misc-utils';
 import { deployLendingPool } from '../../helpers/contracts-deployments';
-import { getFeeContract } from '../../helpers/contracts-getters';
+import { getFeeContract, getFirstSigner } from '../../helpers/contracts-getters';
+import { MockProxyAddressFactory } from '../../types';
 
 const { utils } = ethers;
 
@@ -52,19 +53,16 @@ makeSuite('LendingPoolAddressesProvider', (testEnv: TestEnv) => {
 
     const currentAddressesProviderOwner = users[1];
 
-    const mockLendingPool = await deployLendingPool();
+    const mockLendingPool = await new MockProxyAddressFactory(await getFirstSigner()).deploy();
     const proxiedAddressId = utils.keccak256(utils.toUtf8Bytes('RANDOM_PROXIED'));
-
     const proxiedAddressSetReceipt = await waitForTx(
       await addressesProvider
         .connect(currentAddressesProviderOwner.signer)
         .setAddressAsProxy(proxiedAddressId, mockLendingPool.address)
     );
-
     if (!proxiedAddressSetReceipt.events || proxiedAddressSetReceipt.events?.length < 1) {
       throw new Error('INVALID_EVENT_EMMITED');
     }
-
     expect(proxiedAddressSetReceipt.events[0].event).to.be.equal('ProxyCreated');
     expect(proxiedAddressSetReceipt.events[1].event).to.be.equal('AddressSet');
     expect(proxiedAddressSetReceipt.events[1].args?.id).to.be.equal(proxiedAddressId);

@@ -138,9 +138,11 @@ makeSuite('Mainnet Check list', (testEnv: TestEnv) => {
 
     // Full Repay WETH with native ETH
     await waitForTx(
-      await wethGateway.connect(user.signer).repayETH(MAX_UINT_AMOUNT, '1', user.address, {
-        value: repaySize.add(H1NativeApplication_Fee),
-      })
+      await wethGateway
+        .connect(user.signer)
+        .repayETH(pool.address, MAX_UINT_AMOUNT, '1', user.address, {
+          value: repaySize.add(H1NativeApplication_Fee),
+        })
     );
 
     const debtBalanceAfterRepay = await stableDebtToken.balanceOf(user.address);

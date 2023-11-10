@@ -17,15 +17,15 @@ import '../h1/IFeeContract.sol';
  * @author Jason Raymond Bell
  */
 contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuard {
-  IFeeContract private feeContract;
+  IFeeContract private _feeContract;
 
   constructor(
     ILendingPoolAddressesProvider addressesProvider,
     IParaSwapAugustusRegistry augustusRegistry,
-    address _feeContract
+    address feeContract
   ) public BaseParaSwapSellAdapter(addressesProvider, augustusRegistry) {
     // This is only required to initialize BaseParaSwapSellAdapter
-    feeContract = IFeeContract(_feeContract);
+    _feeContract = IFeeContract(feeContract);
   }
 
   /**
@@ -142,7 +142,12 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
 
     assetToSwapTo.safeApprove(address(LENDING_POOL), 0);
     assetToSwapTo.safeApprove(address(LENDING_POOL), amountReceived);
-    LENDING_POOL.deposit{value: msg.value}(address(assetToSwapTo), amountReceived, msg.sender, 0);
+    LENDING_POOL.deposit{value: _feeContract.queryOracle()}(
+      address(assetToSwapTo),
+      amountReceived,
+      msg.sender,
+      0
+    );
   }
 
   /**
@@ -196,7 +201,12 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
 
     assetToSwapTo.safeApprove(address(LENDING_POOL), 0);
     assetToSwapTo.safeApprove(address(LENDING_POOL), amountReceived);
-    LENDING_POOL.deposit{value: msg.value}(address(assetToSwapTo), amountReceived, initiator, 0);
+    LENDING_POOL.deposit{value: _feeContract.queryOracle()}(
+      address(assetToSwapTo),
+      amountReceived,
+      initiator,
+      0
+    );
 
     _pullATokenAndWithdraw(
       address(assetToSwapFrom),

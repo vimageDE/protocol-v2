@@ -303,7 +303,9 @@ makeSuite('Pausable Pool', (testEnv: TestEnv) => {
       value: H1NativeApplication_Fee,
     });
 
-    await pool.connect(user.signer).borrow(usdc.address, amountToBorrow, 2, 0, user.address);
+    await pool
+      .connect(user.signer)
+      .borrow(usdc.address, amountToBorrow, 2, 0, user.address, { value: H1NativeApplication_Fee });
 
     // Pause pool
     await configurator.connect(users[1].signer).setPoolPause(true);

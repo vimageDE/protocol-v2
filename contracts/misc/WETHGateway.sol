@@ -52,7 +52,7 @@ contract WETHGateway is IWETHGateway, Ownable {
     WETH.deposit{value: depositAmount}();
     ILendingPool(lendingPool).deposit{value: fee}(
       address(WETH),
-      msg.value,
+      depositAmount,
       onBehalfOf,
       referralCode
     );
@@ -110,10 +110,10 @@ contract WETHGateway is IWETHGateway, Ownable {
     uint256 repayAmount = msg.value - fee;
     require(repayAmount >= paybackAmount, 'msg.value is less than repayment amount');
     WETH.deposit{value: paybackAmount}();
-    ILendingPool(lendingPool).repay{value: fee}(address(WETH), msg.value, rateMode, onBehalfOf);
+    ILendingPool(lendingPool).repay{value: fee}(address(WETH), repayAmount, rateMode, onBehalfOf);
 
     // refund remaining dust eth
-    if (msg.value > paybackAmount) _safeTransferETH(msg.sender, msg.value - paybackAmount);
+    if (repayAmount > paybackAmount) _safeTransferETH(msg.sender, repayAmount - paybackAmount);
   }
 
   /**

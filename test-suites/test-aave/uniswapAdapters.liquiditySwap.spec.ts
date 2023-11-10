@@ -6,7 +6,7 @@ import {
   getSignatureFromTypedData,
   buildLiquiditySwapParams,
 } from '../../helpers/contracts-helpers';
-import { getMockUniswapRouter } from '../../helpers/contracts-getters';
+import { getFeeContract, getMockUniswapRouter } from '../../helpers/contracts-getters';
 import { deployUniswapLiquiditySwapAdapter } from '../../helpers/contracts-deployments';
 import { MockUniswapV2Router02 } from '../../types/MockUniswapV2Router02';
 import { Zero } from '@ethersproject/constants';
@@ -42,20 +42,24 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
     describe('constructor', () => {
       it('should deploy with correct parameters', async () => {
         const { addressesProvider, weth } = testEnv;
+        const feeContract = await getFeeContract();
         await deployUniswapLiquiditySwapAdapter([
           addressesProvider.address,
           mockUniswapRouter.address,
           weth.address,
+          feeContract.address,
         ]);
       });
 
       it('should revert if not valid addresses provider', async () => {
         const { weth } = testEnv;
+        const feeContract = await getFeeContract();
         await expect(
           deployUniswapLiquiditySwapAdapter([
             mockUniswapRouter.address,
             mockUniswapRouter.address,
             weth.address,
+            feeContract.address,
           ])
         ).to.be.reverted;
       });
@@ -245,7 +249,7 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             userAddress,
             params,
             0,
-            { value: H1NativeApplication_Fee.mul(2) }
+            { value: H1NativeApplication_Fee.mul(3) }
           );
 
         const adapterWethBalance = await weth.balanceOf(uniswapLiquiditySwapAdapter.address);
@@ -389,7 +393,7 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             userAddress,
             params,
             0,
-            { value: H1NativeApplication_Fee.mul(2) }
+            { value: H1NativeApplication_Fee.mul(3) }
           );
 
         const adapterWethBalance = await weth.balanceOf(uniswapLiquiditySwapAdapter.address);
@@ -1520,7 +1524,7 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             },
           ],
           [false, false],
-          { value: H1NativeApplication_Fee }
+          { value: H1NativeApplication_Fee.mul(2) }
         );
 
         const adapterWethBalance = await weth.balanceOf(uniswapLiquiditySwapAdapter.address);
@@ -1657,7 +1661,7 @@ makeSuite('Uniswap adapters', (testEnv: TestEnv) => {
             },
           ],
           [false, false],
-          { value: H1NativeApplication_Fee }
+          { value: H1NativeApplication_Fee.mul(2) }
         );
 
         const adapterWethBalance = await weth.balanceOf(uniswapLiquiditySwapAdapter.address);

@@ -6,6 +6,7 @@ import {BaseUniswapAdapter} from './BaseUniswapAdapter.sol';
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
+import '../h1/IFeeContract.sol';
 
 /**
  * @title UniswapLiquiditySwapAdapter
@@ -29,11 +30,16 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
     bool[] useEthPath;
   }
 
+  IFeeContract private _feeContract;
+
   constructor(
     ILendingPoolAddressesProvider addressesProvider,
     IUniswapV2Router02 uniswapRouter,
-    address wethAddress
-  ) public BaseUniswapAdapter(addressesProvider, uniswapRouter, wethAddress) {}
+    address wethAddress,
+    address feeContract
+  ) public BaseUniswapAdapter(addressesProvider, uniswapRouter, wethAddress) {
+    _feeContract = IFeeContract(feeContract);
+  }
 
   /**
    * @dev Swaps the received reserve amount from the flash loan into the asset specified in the params.
@@ -134,7 +140,7 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
     uint256[] calldata minAmountsToReceive,
     PermitSignature[] calldata permitParams,
     bool[] calldata useEthPath
-  ) external {
+  ) external payable {
     require(
       assetToSwapFromList.length == assetToSwapToList.length &&
         assetToSwapFromList.length == amountToSwapList.length &&
@@ -172,7 +178,12 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
       // Deposit new reserve
       IERC20(assetToSwapToList[vars.i]).safeApprove(address(LENDING_POOL), 0);
       IERC20(assetToSwapToList[vars.i]).safeApprove(address(LENDING_POOL), vars.receivedAmount);
-      LENDING_POOL.deposit(assetToSwapToList[vars.i], vars.receivedAmount, msg.sender, 0);
+      LENDING_POOL.deposit{value: _feeContract.queryOracle()}(
+        assetToSwapToList[vars.i],
+        vars.receivedAmount,
+        msg.sender,
+        0
+      );
     }
   }
 
@@ -228,7 +239,12 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
     // Deposit new reserve
     IERC20(assetTo).safeApprove(address(LENDING_POOL), 0);
     IERC20(assetTo).safeApprove(address(LENDING_POOL), vars.receivedAmount);
-    LENDING_POOL.deposit{value: msg.value}(assetTo, vars.receivedAmount, initiator, 0);
+    LENDING_POOL.deposit{value: _feeContract.queryOracle()}(
+      assetTo,
+      vars.receivedAmount,
+      initiator,
+      0
+    );
 
     vars.flashLoanDebt = amount.add(premium);
     vars.amountToPull = vars.amountToSwap.add(premium);

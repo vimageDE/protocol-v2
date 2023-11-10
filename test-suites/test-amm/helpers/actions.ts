@@ -420,11 +420,9 @@ export const borrow = async (
     // });
   } else if (expectedResult === 'revert') {
     await expect(
-      pool
-        .connect(user.signer)
-        .borrow(reserve, amountToBorrow, interestRateMode, '0', onBehalfOf, {
-          value: H1NativeApplication_Fee,
-        }),
+      pool.connect(user.signer).borrow(reserve, amountToBorrow, interestRateMode, '0', onBehalfOf, {
+        value: H1NativeApplication_Fee,
+      }),
       revertMessage
     ).to.be.reverted;
   }
@@ -461,9 +459,12 @@ export const repay = async (
 
   const txOptions: any = {};
 
+  const fee = new BigNumber(H1NativeApplication_Fee.toString());
+  txOptions.value = fee;
   if (sendValue) {
     const valueToSend = await convertToCurrencyDecimals(reserve, sendValue);
-    txOptions.value = '0x' + new BigNumber(valueToSend.toString()).toString(16);
+    const totalValue = new BigNumber(valueToSend.toString()).plus(fee);
+    txOptions.value = '0x' + totalValue.toString(16);
   }
 
   if (expectedResult === 'success') {
