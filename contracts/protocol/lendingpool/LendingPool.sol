@@ -25,7 +25,7 @@ import {ReserveConfiguration} from '../libraries/configuration/ReserveConfigurat
 import {UserConfiguration} from '../libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {LendingPoolStorage} from './LendingPoolStorage.sol';
-import {H1NativeApplicationDowngraded} from '../../h1/H1NativeApplicationDowngraded.sol';
+import {H1NativeApplicationUpgradableV06Downgrade} from '../../h1/H1NativeApplicationUpgradableV06Downgrade.sol';
 
 /**
  * @title LendingPool contract
@@ -48,7 +48,7 @@ contract LendingPool is
   VersionedInitializable,
   ILendingPool,
   LendingPoolStorage,
-  H1NativeApplicationDowngraded
+  H1NativeApplicationUpgradableV06Downgrade
 {
   using SafeMath for uint256;
   using WadRayMath for uint256;
@@ -97,7 +97,7 @@ contract LendingPool is
     _maxStableRateBorrowSizePercent = 2500;
     _flashLoanPremiumTotal = 9;
     _maxNumberOfReserves = 128;
-    H1NativeApplication_init(feeContract);
+    initializeBase(feeContract);
   }
 
   /**
@@ -116,7 +116,7 @@ contract LendingPool is
     uint256 amount,
     address onBehalfOf,
     uint16 referralCode
-  ) external payable override whenNotPaused applicationFee {
+  ) external payable override whenNotPaused applicationFee(false, true) {
     DataTypes.ReserveData storage reserve = _reserves[asset];
 
     ValidationLogic.validateDeposit(reserve, amount);
@@ -214,7 +214,7 @@ contract LendingPool is
     uint256 interestRateMode,
     uint16 referralCode,
     address onBehalfOf
-  ) external payable override whenNotPaused applicationFee {
+  ) external payable override whenNotPaused applicationFee(false, true) {
     DataTypes.ReserveData storage reserve = _reserves[asset];
 
     _executeBorrow(
@@ -248,7 +248,16 @@ contract LendingPool is
     uint256 amount,
     uint256 rateMode,
     address onBehalfOf
-  ) external payable override whenNotPaused applicationFee returns (uint256) {
+  ) external payable override whenNotPaused applicationFee(false, true) returns (uint256) {
+    return _repay(asset, amount, rateMode, onBehalfOf);
+  }
+
+  function _repay(
+    address asset,
+    uint256 amount,
+    uint256 rateMode,
+    address onBehalfOf
+  ) internal returns (uint256) {
     DataTypes.ReserveData storage reserve = _reserves[asset];
 
     (uint256 stableDebt, uint256 variableDebt) = Helpers.getUserCurrentDebt(onBehalfOf, reserve);
@@ -438,7 +447,7 @@ contract LendingPool is
     address user,
     uint256 debtToCover,
     bool receiveAToken
-  ) external payable override whenNotPaused applicationFee {
+  ) external payable override whenNotPaused applicationFee(false, true) {
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
 
     //solium-disable-next-line
@@ -497,7 +506,19 @@ contract LendingPool is
     address onBehalfOf,
     bytes calldata params,
     uint16 referralCode
-  ) external payable override whenNotPaused applicationFeeWithPayableFunction {
+  ) external payable override whenNotPaused applicationFee(true, true) {
+    _flashLoan(receiverAddress, assets, amounts, modes, onBehalfOf, params, referralCode);
+  }
+
+  function _flashLoan(
+    address receiverAddress,
+    address[] calldata assets,
+    uint256[] calldata amounts,
+    uint256[] calldata modes,
+    address onBehalfOf,
+    bytes calldata params,
+    uint16 referralCode
+  ) internal {
     FlashLoanLocalVars memory vars;
 
     ValidationLogic.validateFlashloan(assets, amounts);
@@ -516,7 +537,7 @@ contract LendingPool is
     }
 
     require(
-      vars.receiver.executeOperation{value: msgValueAfterFee}(
+      vars.receiver.executeOperation{value: _msgValueAfterFee()}(
         assets,
         amounts,
         premiums,

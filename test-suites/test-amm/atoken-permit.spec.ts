@@ -30,9 +30,6 @@ makeSuite('AToken: Permit', (testEnv: TestEnv) => {
   it('Get aDAI for tests', async () => {
     const { dai, pool, deployer } = testEnv;
 
-    const feeContractAddress = await pool._feeContract();
-    console.log('- should be feeContract.address: ', feeContractAddress);
-
     await dai.mint(parseEther('20000'));
     await dai.approve(pool.address, parseEther('20000'));
 

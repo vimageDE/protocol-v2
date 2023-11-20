@@ -153,7 +153,7 @@ makeSuite('Use native ETH at LendingPool via WETHGateway', (testEnv: TestEnv) =>
     await waitForTx(
       await wethGateway
         .connect(user.signer)
-        .repayETH(pool.address, MAX_UINT_AMOUNT, '1', user.address, {
+        .repayETH(pool.address, repaySize.mul(10), '1', user.address, {
           value: repaySize.add(H1NativeApplication_Fee),
         })
     );
@@ -216,8 +216,8 @@ makeSuite('Use native ETH at LendingPool via WETHGateway', (testEnv: TestEnv) =>
     await waitForTx(
       await wethGateway
         .connect(user.signer)
-        .repayETH(pool.address, MAX_UINT_AMOUNT, '2', user.address, {
-          value: repaySize.add(H1NativeApplication_Fee),
+        .repayETH(pool.address, repaySize.mul(10), '2', user.address, {
+          value: repaySize.mul(10).add(H1NativeApplication_Fee),
         })
     );
     const debtBalanceAfterFullRepay = await varDebtToken.balanceOf(user.address);

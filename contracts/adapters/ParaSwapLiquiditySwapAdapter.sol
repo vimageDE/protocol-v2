@@ -9,7 +9,7 @@ import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detai
 import {IERC20WithPermit} from '../interfaces/IERC20WithPermit.sol';
 import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
 import {ReentrancyGuard} from '../dependencies/openzeppelin/contracts/ReentrancyGuard.sol';
-import '../h1/IFeeContract.sol';
+import '../h1/interfaces/IFeeContractV06Downgrade.sol';
 
 /**
  * @title ParaSwapLiquiditySwapAdapter
@@ -26,6 +26,7 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
   ) public BaseParaSwapSellAdapter(addressesProvider, augustusRegistry) {
     // This is only required to initialize BaseParaSwapSellAdapter
     _feeContract = IFeeContract(feeContract);
+    _feeContract.setGraceContract(true);
   }
 
   /**
@@ -142,7 +143,7 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
 
     assetToSwapTo.safeApprove(address(LENDING_POOL), 0);
     assetToSwapTo.safeApprove(address(LENDING_POOL), amountReceived);
-    LENDING_POOL.deposit{value: _feeContract.queryOracle()}(
+    LENDING_POOL.deposit{value: _feeContract.getFee()}(
       address(assetToSwapTo),
       amountReceived,
       msg.sender,
@@ -201,7 +202,7 @@ contract ParaSwapLiquiditySwapAdapter is BaseParaSwapSellAdapter, ReentrancyGuar
 
     assetToSwapTo.safeApprove(address(LENDING_POOL), 0);
     assetToSwapTo.safeApprove(address(LENDING_POOL), amountReceived);
-    LENDING_POOL.deposit{value: _feeContract.queryOracle()}(
+    LENDING_POOL.deposit{value: _feeContract.getFee()}(
       address(assetToSwapTo),
       amountReceived,
       initiator,

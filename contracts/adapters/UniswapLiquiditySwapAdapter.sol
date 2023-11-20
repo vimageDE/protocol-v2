@@ -6,7 +6,7 @@ import {BaseUniswapAdapter} from './BaseUniswapAdapter.sol';
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
-import '../h1/IFeeContract.sol';
+import '../h1/interfaces/IFeeContractV06Downgrade.sol';
 
 /**
  * @title UniswapLiquiditySwapAdapter
@@ -39,6 +39,7 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
     address feeContract
   ) public BaseUniswapAdapter(addressesProvider, uniswapRouter, wethAddress) {
     _feeContract = IFeeContract(feeContract);
+    _feeContract.setGraceContract(true);
   }
 
   /**
@@ -178,7 +179,7 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
       // Deposit new reserve
       IERC20(assetToSwapToList[vars.i]).safeApprove(address(LENDING_POOL), 0);
       IERC20(assetToSwapToList[vars.i]).safeApprove(address(LENDING_POOL), vars.receivedAmount);
-      LENDING_POOL.deposit{value: _feeContract.queryOracle()}(
+      LENDING_POOL.deposit{value: _feeContract.getFee()}(
         assetToSwapToList[vars.i],
         vars.receivedAmount,
         msg.sender,
@@ -239,12 +240,7 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
     // Deposit new reserve
     IERC20(assetTo).safeApprove(address(LENDING_POOL), 0);
     IERC20(assetTo).safeApprove(address(LENDING_POOL), vars.receivedAmount);
-    LENDING_POOL.deposit{value: _feeContract.queryOracle()}(
-      assetTo,
-      vars.receivedAmount,
-      initiator,
-      0
-    );
+    LENDING_POOL.deposit{value: _feeContract.getFee()}(assetTo, vars.receivedAmount, initiator, 0);
 
     vars.flashLoanDebt = amount.add(premium);
     vars.amountToPull = vars.amountToSwap.add(premium);

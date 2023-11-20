@@ -12,22 +12,23 @@ import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveC
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {Helpers} from '../protocol/libraries/helpers/Helpers.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
-import '../h1/IFeeContract.sol';
+import '../h1/interfaces/IFeeContractV06Downgrade.sol';
 
 contract WETHGateway is IWETHGateway, Ownable {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
   IWETH internal immutable WETH;
-  IFeeContract private feeContract;
+  IFeeContract private _feeContract;
 
   /**
    * @dev Sets the WETH address and the LendingPoolAddressesProvider address. Infinite approves lending pool.
    * @param weth Address of the Wrapped Ether contract
    **/
-  constructor(address weth, address _feeContract) public {
+  constructor(address weth, address feeContract) public {
     WETH = IWETH(weth);
-    feeContract = IFeeContract(_feeContract);
+    _feeContract = IFeeContract(feeContract);
+    _feeContract.setGraceContract(true);
   }
 
   function authorizeLendingPool(address lendingPool) external onlyOwner {
@@ -46,7 +47,7 @@ contract WETHGateway is IWETHGateway, Ownable {
     address onBehalfOf,
     uint16 referralCode
   ) external payable override {
-    uint256 fee = feeContract.queryOracle();
+    uint256 fee = _feeContract.getFee();
     require(msg.value > fee, 'insufficient eth amount');
     uint256 depositAmount = msg.value - fee;
     WETH.deposit{value: depositAmount}();
@@ -105,7 +106,7 @@ contract WETHGateway is IWETHGateway, Ownable {
     if (amount < paybackAmount) {
       paybackAmount = amount;
     }
-    uint256 fee = feeContract.queryOracle();
+    uint256 fee = _feeContract.getFee();
     require(msg.value > fee, 'insufficient eth amount');
     uint256 repayAmount = msg.value - fee;
     require(repayAmount >= paybackAmount, 'msg.value is less than repayment amount');
